@@ -1,0 +1,17 @@
+# Wrong Turn leaderboard Worker. NO secrets here — FIREBASE_PROJECT_ID is public
+# (used only to check the token's aud/iss). D1 is a binding, not a shipped secret.
+name = "wrong-turn-lb"
+main = "src/index.ts"
+compatibility_date = "2026-06-01"
+
+[vars]
+FIREBASE_PROJECT_ID = "wrong-turn-db"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "wrong-turn-leaderboard"
+# Set by `wrangler d1 create wrong-turn-leaderboard` — paste the returned id here.
+database_id = "b214f2bc-75ab-4b75-ae62-18bd1d242111"
+
+# Optional future: a Cron dense-rank pass is NOT used (no materialized ranks →
+# no write amplification). Exact rank is computed on demand from indexes.

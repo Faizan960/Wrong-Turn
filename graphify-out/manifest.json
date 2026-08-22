@@ -1,0 +1,512 @@
+{
+  "Analytics/AdConfig.cs": {
+    "mtime": 1784609158.503323,
+    "ast_hash": "e16e5ffcd5bd1377e5adfafe5a9a1b03",
+    "semantic_hash": "e16e5ffcd5bd1377e5adfafe5a9a1b03"
+  },
+  "Analytics/IAdProvider.cs": {
+    "mtime": 1783788072.9754705,
+    "ast_hash": "6870e8b4b1af58db1df838b9caae4fad",
+    "semantic_hash": "6870e8b4b1af58db1df838b9caae4fad"
+  },
+  "Analytics/ILeaderboardProvider.cs": {
+    "mtime": 1784693601.2425346,
+    "ast_hash": "6671c869feccc94bd73f36a76e1749cc",
+    "semantic_hash": "6671c869feccc94bd73f36a76e1749cc"
+  },
+  "Analytics/LevelPlayAdProvider.cs": {
+    "mtime": 1784609138.0131118,
+    "ast_hash": "a93cb62b21d1a7a06f8747af0353672e",
+    "semantic_hash": "a93cb62b21d1a7a06f8747af0353672e"
+  },
+  "Analytics/MockAdProvider.cs": {
+    "mtime": 1783788078.6112528,
+    "ast_hash": "ef639b94ff66130cacad788c6852ee03",
+    "semantic_hash": "ef639b94ff66130cacad788c6852ee03"
+  },
+  "Analytics/MockLeaderboardProvider.cs": {
+    "mtime": 1784785996.3627958,
+    "ast_hash": "4c27d8a2c931be9f332f6dba198fc7c0",
+    "semantic_hash": "4c27d8a2c931be9f332f6dba198fc7c0"
+  },
+  "Analytics/UnityAdsProvider.cs": {
+    "mtime": 1784608735.3599038,
+    "ast_hash": "1c30262b7ebe4ebfd5cfc63c3976e3b5",
+    "semantic_hash": "1c30262b7ebe4ebfd5cfc63c3976e3b5"
+  },
+  "Core/AdAnalytics.cs": {
+    "mtime": 1784563575.9376738,
+    "ast_hash": "10e05498932daff6ba41a264620ddf42",
+    "semantic_hash": "10e05498932daff6ba41a264620ddf42"
+  },
+  "Core/Bootstrapper.cs": {
+    "mtime": 1783748221.190593,
+    "ast_hash": "23ed46a6bead0e45afebd3bf77c1eb22",
+    "semantic_hash": "23ed46a6bead0e45afebd3bf77c1eb22"
+  },
+  "Core/Direction.cs": {
+    "mtime": 1783011406.0605476,
+    "ast_hash": "79bca62148fab359256e8d31efb2cee2",
+    "semantic_hash": "79bca62148fab359256e8d31efb2cee2"
+  },
+  "Core/GameEvents.cs": {
+    "mtime": 1783527000.74332,
+    "ast_hash": "cf3bbca9330881985169c14049031972",
+    "semantic_hash": "cf3bbca9330881985169c14049031972"
+  },
+  "Core/GameState.cs": {
+    "mtime": 1783011403.0097957,
+    "ast_hash": "c61e5b525c4a750485db0a9b383b08cf",
+    "semantic_hash": "c61e5b525c4a750485db0a9b383b08cf"
+  },
+  "Core/MonoSingleton.cs": {
+    "mtime": 1783011372.4704356,
+    "ast_hash": "617f7e628a256d58ae70503729657f78",
+    "semantic_hash": "617f7e628a256d58ae70503729657f78"
+  },
+  "Core/OnboardingAnalytics.cs": {
+    "mtime": 1783527112.3752277,
+    "ast_hash": "04353f7ac16ae8f7c8a6710542374971",
+    "semantic_hash": "04353f7ac16ae8f7c8a6710542374971"
+  },
+  "Core/PerformanceMonitor.cs": {
+    "mtime": 1783013968.1123512,
+    "ast_hash": "c8d96ade99696f035552063e84db2c2b",
+    "semantic_hash": "c8d96ade99696f035552063e84db2c2b"
+  },
+  "Cosmetics/CosmeticCatalog.cs": {
+    "mtime": 1783748322.9761467,
+    "ast_hash": "08b060eb8be957fca122e4792e5b6f56",
+    "semantic_hash": "08b060eb8be957fca122e4792e5b6f56"
+  },
+  "Cosmetics/CosmeticItem.cs": {
+    "mtime": 1784473912.0082462,
+    "ast_hash": "a5d23dcf45fc8e613b5710b3195b8ea7",
+    "semantic_hash": "a5d23dcf45fc8e613b5710b3195b8ea7"
+  },
+  "Gameplay/AchievementData.cs": {
+    "mtime": 1783013062.7706738,
+    "ast_hash": "d38ebdbae8d385dd273fce45a31b6642",
+    "semantic_hash": "d38ebdbae8d385dd273fce45a31b6642"
+  },
+  "Gameplay/ChaosData.cs": {
+    "mtime": 1783013753.0227017,
+    "ast_hash": "0b675c2195f0e31721eb9b1f9186dcbb",
+    "semantic_hash": "0b675c2195f0e31721eb9b1f9186dcbb"
+  },
+  "Gameplay/ChaosEffect.cs": {
+    "mtime": 1783013756.1205287,
+    "ast_hash": "bf73bdcb502542c1998c50bfe395dbed",
+    "semantic_hash": "bf73bdcb502542c1998c50bfe395dbed"
+  },
+  "Gameplay/ChaosSystem.cs": {
+    "mtime": 1783013772.0364463,
+    "ast_hash": "588006c7e5327c62206ca31c25c27222",
+    "semantic_hash": "588006c7e5327c62206ca31c25c27222"
+  },
+  "Gameplay/DailyChallengeData.cs": {
+    "mtime": 1783013204.99761,
+    "ast_hash": "26ae78c9cb127da3c0353acbe4ac7289",
+    "semantic_hash": "26ae78c9cb127da3c0353acbe4ac7289"
+  },
+  "Gameplay/InstructionData.cs": {
+    "mtime": 1784473711.69506,
+    "ast_hash": "71f0fef4fa30df702f39a5b220187d98",
+    "semantic_hash": "71f0fef4fa30df702f39a5b220187d98"
+  },
+  "Gameplay/RuleEngine.cs": {
+    "mtime": 1783526992.0033545,
+    "ast_hash": "b163bd55da7769f27160ffcba1416add",
+    "semantic_hash": "b163bd55da7769f27160ffcba1416add"
+  },
+  "Leaderboards/CloudLeaderboardProvider.cs": {
+    "mtime": 1784785946.6848354,
+    "ast_hash": "ec3e43cdaa87b4d39ca73347e4564424",
+    "semantic_hash": "ec3e43cdaa87b4d39ca73347e4564424"
+  },
+  "Leaderboards/FirebaseRestClient.cs": {
+    "mtime": 1784697748.7564647,
+    "ast_hash": "660b76655cc1df04df79cbb7cba48170",
+    "semantic_hash": "660b76655cc1df04df79cbb7cba48170"
+  },
+  "Leaderboards/LeaderboardCache.cs": {
+    "mtime": 1784786022.4326758,
+    "ast_hash": "9a75c2f3694a1fd5d1c3bc98fd616bc7",
+    "semantic_hash": "9a75c2f3694a1fd5d1c3bc98fd616bc7"
+  },
+  "Leaderboards/LeaderboardConfig.cs": {
+    "mtime": 1784697719.7723622,
+    "ast_hash": "46921a283d671ad9f722bc0196dea796",
+    "semantic_hash": "46921a283d671ad9f722bc0196dea796"
+  },
+  "Leaderboards/LeaderboardModels.cs": {
+    "mtime": 1784785916.4537334,
+    "ast_hash": "1f8ba9c55789c8c4ab7b1eb415281af3",
+    "semantic_hash": "1f8ba9c55789c8c4ab7b1eb415281af3"
+  },
+  "Leaderboards/MiniJson.cs": {
+    "mtime": 1784693710.826654,
+    "ast_hash": "e6acf20b9133b866ca035fad0acf2cef",
+    "semantic_hash": "e6acf20b9133b866ca035fad0acf2cef"
+  },
+  "Leaderboards/RegionCatalog.cs": {
+    "mtime": 1784694109.7217636,
+    "ast_hash": "dbd6b90fd2c6f4c12c39e824651fea65",
+    "semantic_hash": "dbd6b90fd2c6f4c12c39e824651fea65"
+  },
+  "Managers/AchievementManager.cs": {
+    "mtime": 1783413403.7795868,
+    "ast_hash": "0d2e92e9e0182cf169edf69a7d178dbd",
+    "semantic_hash": "0d2e92e9e0182cf169edf69a7d178dbd"
+  },
+  "Managers/AdsManager.cs": {
+    "mtime": 1784609176.345549,
+    "ast_hash": "1e7f78db8f9a7055c10f72e6c7abe745",
+    "semantic_hash": "1e7f78db8f9a7055c10f72e6c7abe745"
+  },
+  "Managers/AudioManager.cs": {
+    "mtime": 1783085727.571305,
+    "ast_hash": "c775d4c9bb52ce5ebbc09ebd85bbbbd4",
+    "semantic_hash": "c775d4c9bb52ce5ebbc09ebd85bbbbd4"
+  },
+  "Managers/ChaosManager.cs": {
+    "mtime": 1783013794.0567856,
+    "ast_hash": "1f3af5c6b12b0f101f6878ea4cd28986",
+    "semantic_hash": "1f3af5c6b12b0f101f6878ea4cd28986"
+  },
+  "Managers/CosmeticManager.cs": {
+    "mtime": 1783013286.48975,
+    "ast_hash": "90478b5e3d55e5219dbd7a5ec8ff2902",
+    "semantic_hash": "90478b5e3d55e5219dbd7a5ec8ff2902"
+  },
+  "Managers/CurrencyManager.cs": {
+    "mtime": 1784563745.9153168,
+    "ast_hash": "e8aa21baa47aa4770dadc25abc68a37f",
+    "semantic_hash": "e8aa21baa47aa4770dadc25abc68a37f"
+  },
+  "Managers/DailyChallengeManager.cs": {
+    "mtime": 1784473723.0021358,
+    "ast_hash": "72883f0eda705f00fae87691b77bb93f",
+    "semantic_hash": "72883f0eda705f00fae87691b77bb93f"
+  },
+  "Managers/DifficultyManager.cs": {
+    "mtime": 1783527133.677993,
+    "ast_hash": "474d4f1e0c6c6bddd85c023ac78e925b",
+    "semantic_hash": "474d4f1e0c6c6bddd85c023ac78e925b"
+  },
+  "Managers/FeedbackManager.cs": {
+    "mtime": 1783013933.450493,
+    "ast_hash": "1e4922fb1f3b841a23439796713e11a4",
+    "semantic_hash": "1e4922fb1f3b841a23439796713e11a4"
+  },
+  "Managers/GameManager.cs": {
+    "mtime": 1783527108.706653,
+    "ast_hash": "41d2ec2611f7fce53184321c7d7778f4",
+    "semantic_hash": "41d2ec2611f7fce53184321c7d7778f4"
+  },
+  "Managers/InputManager.cs": {
+    "mtime": 1783527029.2407446,
+    "ast_hash": "d96103a49014444df20bbfc619779ca0",
+    "semantic_hash": "d96103a49014444df20bbfc619779ca0"
+  },
+  "Managers/LeaderboardManager.cs": {
+    "mtime": 1784786806.7811446,
+    "ast_hash": "74919d6df37fa4efde863b2fe75ea44c",
+    "semantic_hash": "74919d6df37fa4efde863b2fe75ea44c"
+  },
+  "Managers/ObjectPoolManager.cs": {
+    "mtime": 1783013958.46099,
+    "ast_hash": "afa560e9f821073e8c5462178621ffae",
+    "semantic_hash": "afa560e9f821073e8c5462178621ffae"
+  },
+  "Managers/SaveManager.cs": {
+    "mtime": 1783350150.8076541,
+    "ast_hash": "c781d6cf7b38c0b73cf8780c22f46643",
+    "semantic_hash": "c781d6cf7b38c0b73cf8780c22f46643"
+  },
+  "Managers/StatisticsManager.cs": {
+    "mtime": 1783413388.801699,
+    "ast_hash": "b8753a57e119e62d02ddcb8903442e12",
+    "semantic_hash": "b8753a57e119e62d02ddcb8903442e12"
+  },
+  "Managers/UIManager.cs": {
+    "mtime": 1783413371.31823,
+    "ast_hash": "bc863099115c57a71fad7f0c37e255c0",
+    "semantic_hash": "bc863099115c57a71fad7f0c37e255c0"
+  },
+  "Presentation/AccessibilityPrefs.cs": {
+    "mtime": 1783237989.492976,
+    "ast_hash": "d161bcde1f070ae72044a8c72c6311ae",
+    "semantic_hash": "d161bcde1f070ae72044a8c72c6311ae"
+  },
+  "Presentation/AmbientAtmosphere.cs": {
+    "mtime": 1783238114.4542174,
+    "ast_hash": "024fedc5ff0adbd5b9340866312d1350",
+    "semantic_hash": "024fedc5ff0adbd5b9340866312d1350"
+  },
+  "Presentation/ArrowEntrance.cs": {
+    "mtime": 1784473620.8190055,
+    "ast_hash": "4a38bd98d9d740e115c8d6b092849382",
+    "semantic_hash": "4a38bd98d9d740e115c8d6b092849382"
+  },
+  "Presentation/ArrowIdleMotion.cs": {
+    "mtime": 1783233745.935617,
+    "ast_hash": "e934732d21fc282d67f93aee8c95962d",
+    "semantic_hash": "e934732d21fc282d67f93aee8c95962d"
+  },
+  "Presentation/ArrowParallax.cs": {
+    "mtime": 1783176613.0798028,
+    "ast_hash": "2b597cbb5261b7f9a7f61fc64f59ad3f",
+    "semantic_hash": "2b597cbb5261b7f9a7f61fc64f59ad3f"
+  },
+  "Presentation/AudioFX.cs": {
+    "mtime": 1783350482.0842848,
+    "ast_hash": "bdf89d095feffdb9c576e75e53647261",
+    "semantic_hash": "bdf89d095feffdb9c576e75e53647261"
+  },
+  "Presentation/ButtonSfx.cs": {
+    "mtime": 1783176636.0469608,
+    "ast_hash": "54da383416b9ed03e3638cf77e476b55",
+    "semantic_hash": "54da383416b9ed03e3638cf77e476b55"
+  },
+  "Presentation/CameraPulse.cs": {
+    "mtime": 1783350470.0492983,
+    "ast_hash": "79488904700d6bd98762141723557e06",
+    "semantic_hash": "79488904700d6bd98762141723557e06"
+  },
+  "Presentation/ChaosIntroCard.cs": {
+    "mtime": 1783413558.591781,
+    "ast_hash": "88d2a50c3ef5b6d84bc050fedcc49b37",
+    "semantic_hash": "88d2a50c3ef5b6d84bc050fedcc49b37"
+  },
+  "Presentation/ComboAnticipation.cs": {
+    "mtime": 1783176644.9408991,
+    "ast_hash": "732b12e694484dc1bad1df32df9d700a",
+    "semantic_hash": "732b12e694484dc1bad1df32df9d700a"
+  },
+  "Presentation/ComboColorize.cs": {
+    "mtime": 1783087541.8310843,
+    "ast_hash": "04fc238344bbe84d7c2b3288dda0e0d0",
+    "semantic_hash": "04fc238344bbe84d7c2b3288dda0e0d0"
+  },
+  "Presentation/DailyResetCountdown.cs": {
+    "mtime": 1783234069.951541,
+    "ast_hash": "631b58ae2518563f1e85f08228341dc3",
+    "semantic_hash": "631b58ae2518563f1e85f08228341dc3"
+  },
+  "Presentation/DayStreak.cs": {
+    "mtime": 1783238052.0447068,
+    "ast_hash": "8e523cf616c3033e852c31acaaa5d39c",
+    "semantic_hash": "8e523cf616c3033e852c31acaaa5d39c"
+  },
+  "Presentation/DiscoveryCelebration.cs": {
+    "mtime": 1784473695.9470642,
+    "ast_hash": "1b36dfa5acc0f0fa4098bf8b2f9edc76",
+    "semantic_hash": "1b36dfa5acc0f0fa4098bf8b2f9edc76"
+  },
+  "Presentation/FirstLaunchOverlay.cs": {
+    "mtime": 1783525854.0316222,
+    "ast_hash": "e53839c4ee4202599a44eb151622752d",
+    "semantic_hash": "e53839c4ee4202599a44eb151622752d"
+  },
+  "Presentation/FrameRateApplier.cs": {
+    "mtime": 1783234048.6915526,
+    "ast_hash": "1a47ce2a709552b0d1b0c3b91cc2504a",
+    "semantic_hash": "1a47ce2a709552b0d1b0c3b91cc2504a"
+  },
+  "Presentation/HitstopManager.cs": {
+    "mtime": 1783350478.8094938,
+    "ast_hash": "422408da874582c985f04436db8dbbaa",
+    "semantic_hash": "422408da874582c985f04436db8dbbaa"
+  },
+  "Presentation/MenuAmbience.cs": {
+    "mtime": 1783234099.4305396,
+    "ast_hash": "469c1e8e4e3071c243137ff4d914efdc",
+    "semantic_hash": "469c1e8e4e3071c243137ff4d914efdc"
+  },
+  "Presentation/MenuMotion.cs": {
+    "mtime": 1783234265.7715857,
+    "ast_hash": "a145ae9e02a3a3461c879906e29199fc",
+    "semantic_hash": "a145ae9e02a3a3461c879906e29199fc"
+  },
+  "Presentation/MilestoneFX.cs": {
+    "mtime": 1783233992.1897683,
+    "ast_hash": "71da975d646d2a5da6ac1b49a147ca96",
+    "semantic_hash": "71da975d646d2a5da6ac1b49a147ca96"
+  },
+  "Presentation/NearMissPrompt.cs": {
+    "mtime": 1783238100.9099226,
+    "ast_hash": "9d9255f541ad092fdf0f61abad74885d",
+    "semantic_hash": "9d9255f541ad092fdf0f61abad74885d"
+  },
+  "Presentation/PurpleTapFX.cs": {
+    "mtime": 1784473632.126891,
+    "ast_hash": "fa7b4031fb5cb2707f2b0d59ed4d3eb2",
+    "semantic_hash": "fa7b4031fb5cb2707f2b0d59ed4d3eb2"
+  },
+  "Presentation/RecoveryFX.cs": {
+    "mtime": 1784473698.023666,
+    "ast_hash": "93c54081f4d0f6d9e680c2f9730ae569",
+    "semantic_hash": "93c54081f4d0f6d9e680c2f9730ae569"
+  },
+  "Presentation/RuleColorLabel.cs": {
+    "mtime": 1784473615.7157154,
+    "ast_hash": "ff1312ded7bed199def10c3599902bb8",
+    "semantic_hash": "ff1312ded7bed199def10c3599902bb8"
+  },
+  "Presentation/RulebookOverlay.cs": {
+    "mtime": 1784473690.0819187,
+    "ast_hash": "61a9f96c35772b410538da13031d0bd1",
+    "semantic_hash": "61a9f96c35772b410538da13031d0bd1"
+  },
+  "Presentation/RunTip.cs": {
+    "mtime": 1783413566.8216953,
+    "ast_hash": "a573e0e5d67ae847b34cb71b4b02f71c",
+    "semantic_hash": "a573e0e5d67ae847b34cb71b4b02f71c"
+  },
+  "Presentation/RunsThisSession.cs": {
+    "mtime": 1783176660.5213873,
+    "ast_hash": "8c8220f5b999e312591139356f98a681",
+    "semantic_hash": "8c8220f5b999e312591139356f98a681"
+  },
+  "Presentation/SafeAreaFitter.cs": {
+    "mtime": 1783523321.64101,
+    "ast_hash": "ac070fa9b1c141006fe49ccba3d4ea9a",
+    "semantic_hash": "ac070fa9b1c141006fe49ccba3d4ea9a"
+  },
+  "Presentation/ScoreCounter.cs": {
+    "mtime": 1783088373.577822,
+    "ast_hash": "1d61faed4c0c7adb451480e1073e1331",
+    "semantic_hash": "1d61faed4c0c7adb451480e1073e1331"
+  },
+  "Presentation/SessionBestGhost.cs": {
+    "mtime": 1783176752.4303725,
+    "ast_hash": "0c010d7c7b4565a8768c23423446916a",
+    "semantic_hash": "0c010d7c7b4565a8768c23423446916a"
+  },
+  "Presentation/SessionMissions.cs": {
+    "mtime": 1783238043.9406185,
+    "ast_hash": "29a6c49fa01d834f691bafd64a54bafd",
+    "semantic_hash": "29a6c49fa01d834f691bafd64a54bafd"
+  },
+  "Presentation/SettingsOverlay.cs": {
+    "mtime": 1783415776.394758,
+    "ast_hash": "941a969d1bb81c96acb8f1ac348b6f5f",
+    "semantic_hash": "941a969d1bb81c96acb8f1ac348b6f5f"
+  },
+  "Presentation/ShineSweep.cs": {
+    "mtime": 1783233790.0018232,
+    "ast_hash": "08580f3aa3670169b441082e9e07170e",
+    "semantic_hash": "08580f3aa3670169b441082e9e07170e"
+  },
+  "Presentation/StreakDanger.cs": {
+    "mtime": 1783350437.4800854,
+    "ast_hash": "b5e32811b9a1bfc97debec3801efc2e9",
+    "semantic_hash": "b5e32811b9a1bfc97debec3801efc2e9"
+  },
+  "Presentation/TapScaleHighlight.cs": {
+    "mtime": 1783348608.7489145,
+    "ast_hash": "369f008b2b90f58a39b0f79bf8804fc1",
+    "semantic_hash": "369f008b2b90f58a39b0f79bf8804fc1"
+  },
+  "Presentation/TimeoutPulse.cs": {
+    "mtime": 1783350436.2098618,
+    "ast_hash": "2883ebf6a937bb1880cd86aa7e5dcd68",
+    "semantic_hash": "2883ebf6a937bb1880cd86aa7e5dcd68"
+  },
+  "Presentation/TimerRingCaps.cs": {
+    "mtime": 1783169752.8415272,
+    "ast_hash": "046d34733ca1bd1aa8dd48c1ff7f80a2",
+    "semantic_hash": "046d34733ca1bd1aa8dd48c1ff7f80a2"
+  },
+  "Presentation/WrongAnswerFX.cs": {
+    "mtime": 1783086561.016937,
+    "ast_hash": "c2d54a26039db2211420a509a7acc4e0",
+    "semantic_hash": "c2d54a26039db2211420a509a7acc4e0"
+  },
+  "SaveSystem/PlayerData.cs": {
+    "mtime": 1784785920.5663977,
+    "ast_hash": "abb608b3e1627ceb6d2fa8cee39b8ff2",
+    "semantic_hash": "abb608b3e1627ceb6d2fa8cee39b8ff2"
+  },
+  "SaveSystem/StatisticsData.cs": {
+    "mtime": 1783012457.2924273,
+    "ast_hash": "3f448012e2a8b80d3ab782742c77cc97",
+    "semantic_hash": "3f448012e2a8b80d3ab782742c77cc97"
+  },
+  "Testing/AutoPlayQa.cs": {
+    "mtime": 1784563768.9086409,
+    "ast_hash": "06b3ca499b1d5dde6c9279a34993bd2a",
+    "semantic_hash": "06b3ca499b1d5dde6c9279a34993bd2a"
+  },
+  "UI/AchievementUI.cs": {
+    "mtime": 1783013091.728666,
+    "ast_hash": "6f3d24ac842fac2f497d6a638b8f95a0",
+    "semantic_hash": "6f3d24ac842fac2f497d6a638b8f95a0"
+  },
+  "UI/GameOverScreen.cs": {
+    "mtime": 1783169811.5940602,
+    "ast_hash": "4c0b3f3f9afd5bcb41951a1c0ec90d8a",
+    "semantic_hash": "4c0b3f3f9afd5bcb41951a1c0ec90d8a"
+  },
+  "UI/GameplayHUD.cs": {
+    "mtime": 1784473604.0321288,
+    "ast_hash": "da9f6475436f9e8105a7b587eb24bc05",
+    "semantic_hash": "da9f6475436f9e8105a7b587eb24bc05"
+  },
+  "UI/MenuScreen.cs": {
+    "mtime": 1784542633.3680604,
+    "ast_hash": "0758011b427166a84c96604b5bb1652c",
+    "semantic_hash": "0758011b427166a84c96604b5bb1652c"
+  },
+  "UI/PauseOverlay.cs": {
+    "mtime": 1783169752.8405292,
+    "ast_hash": "6c5df1ba85d56c84a3a58a3c6c4a3424",
+    "semantic_hash": "6c5df1ba85d56c84a3a58a3c6c4a3424"
+  },
+  "UI/ProgressUI.cs": {
+    "mtime": 1784543045.409221,
+    "ast_hash": "f17e565280fe8e1e03b05cfb0cc98cac",
+    "semantic_hash": "f17e565280fe8e1e03b05cfb0cc98cac"
+  },
+  "UI/RankingsScreen.cs": {
+    "mtime": 1784786819.9357562,
+    "ast_hash": "ddd4a31153bdf47539d398cba5df4aab",
+    "semantic_hash": "ddd4a31153bdf47539d398cba5df4aab"
+  },
+  "UI/RegionSetupController.cs": {
+    "mtime": 1784694292.2372336,
+    "ast_hash": "a601a00b8433fc7b99e6353c507c991a",
+    "semantic_hash": "a601a00b8433fc7b99e6353c507c991a"
+  },
+  "UI/RetryTip.cs": {
+    "mtime": 1784473692.1718564,
+    "ast_hash": "5e10fa3604793f576ec10c4b8c66549e",
+    "semantic_hash": "5e10fa3604793f576ec10c4b8c66549e"
+  },
+  "UI/RuleDiscoveryCard.cs": {
+    "mtime": 1784473671.8174798,
+    "ast_hash": "0afcaa00d0e2584bd4b5cc319991d675",
+    "semantic_hash": "0afcaa00d0e2584bd4b5cc319991d675"
+  },
+  "UI/TutorialOverlay.cs": {
+    "mtime": 1784473648.4031587,
+    "ast_hash": "77c07b2cba2674fc8c082b74e9d8b347",
+    "semantic_hash": "77c07b2cba2674fc8c082b74e9d8b347"
+  },
+  "UI/UIScreen.cs": {
+    "mtime": 1783011568.3716078,
+    "ast_hash": "1ef97e22c81ab29b51e5c3912f29954d",
+    "semantic_hash": "1ef97e22c81ab29b51e5c3912f29954d"
+  },
+  "Leaderboards/LbLog.cs": {
+    "mtime": 1784785953.6982396,
+    "ast_hash": "4e47a11833447868f2da6f3e2eee6459",
+    "semantic_hash": "4e47a11833447868f2da6f3e2eee6459"
+  },
+  "Leaderboards/UnavailableLeaderboardProvider.cs": {
+    "mtime": 1784785970.2522364,
+    "ast_hash": "6e30d5d0790a73904a1f7a7c04767981",
+    "semantic_hash": "6e30d5d0790a73904a1f7a7c04767981"
+  }
+}

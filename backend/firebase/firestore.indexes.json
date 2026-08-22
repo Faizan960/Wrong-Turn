@@ -1,0 +1,72 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" },
+        { "fieldPath": "achievedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "ASCENDING" },
+        { "fieldPath": "achievedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "countryCode", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" },
+        { "fieldPath": "achievedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "countryCode", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "ASCENDING" },
+        { "fieldPath": "achievedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "cityId", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "DESCENDING" },
+        { "fieldPath": "achievedAt", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "cityId", "order": "ASCENDING" },
+        { "fieldPath": "score", "order": "ASCENDING" },
+        { "fieldPath": "achievedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "leaderboard",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "rulesetVersion", "order": "ASCENDING" },
+        { "fieldPath": "comboScore", "order": "DESCENDING" },
+        { "fieldPath": "comboAchievedAt", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,38 @@
+rules_version = '2';
+// ============================================================================
+// WRONG TURN — Firestore security rules (deny-by-default, §ScoreSecurity)
+// ----------------------------------------------------------------------------
+// NO client may write authoritative scores. There is deliberately no
+// `allow write: if request.auth != null` for leaderboard/players — a modified
+// APK still cannot forge a score. All authoritative writes go through Cloud
+// Functions (firebase-admin bypasses these rules). Sensitive run-validation
+// data is never client-readable.
+// ============================================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Public leaderboard rows — read-only to clients (safe fields only).
+    // Writes: Cloud Functions (admin) exclusively.
+    match /leaderboard/{uid} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // Private profile — a player may read ONLY their own row.
+    // Name/region changes go through validated Cloud Functions, not direct writes.
+    match /players/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Anti-cheat / raw run data — never client-accessible.
+    match /private_runs/{uid} {
+      allow read, write: if false;
+    }
+
+    // Everything else denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
