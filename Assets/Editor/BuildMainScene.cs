@@ -1780,14 +1780,18 @@ namespace WrongDirection.EditorTools
             copyIdFeedback.alpha = 0f; // hidden until a copy happens (RankingsScreen re-zeroes in Awake)
 
             // --- Rank card ---
-            Text("YourRankHdr", contentT, "YOUR RANK", 26, TopCenter, new Vector2(0f, -212f), new Vector2(600f, 34f),
+            // -248 (not -212): the PlayerId row above spans [-228,-188], so a
+            // -212 top edge overlapped it by 16 units. There is ~134 units of
+            // slack down to the rank columns at -300, so this clears the ID
+            // without crowding them.
+            Text("YourRankHdr", contentT, "YOUR RANK", 26, TopCenter, new Vector2(0f, -248f), new Vector2(600f, 34f),
                 font: _fontBody, color: UI_TERTIARY_TEXT);
             var worldVal = RankCardColumn(contentT, "World", "WORLD", -290f, -300f, accent);
             var countryVal = RankCardColumn(contentT, "Country", "COUNTRY", 0f, -300f, accent);
             var cityVal = RankCardColumn(contentT, "City", "CITY", 290f, -300f, accent);
             Text("HighScoreHdr", contentT, "HIGH SCORE", 24, TopCenter, new Vector2(0f, -410f), new Vector2(500f, 32f),
                 font: _fontBody, color: UI_TERTIARY_TEXT);
-            var highScoreVal = Text("HighScoreValue", contentT, "0", 58, TopCenter, new Vector2(0f, -448f), new Vector2(600f, 74f),
+            var highScoreVal = Text("HighScoreValue", contentT, "—", 58, TopCenter, new Vector2(0f, -448f), new Vector2(600f, 74f),
                 font: _fontDisplay, color: new Color(1f, 0.835f, 0f, 1f));
             var rankDelta = Text("RankDelta", contentT, "", 30, TopCenter, new Vector2(0f, -520f), new Vector2(800f, 40f),
                 font: _fontHeading, color: accent);

@@ -295,7 +295,7 @@ namespace WrongDirection.UI
             SetText(worldRankValue, card.hasScore && card.worldRank > 0 ? "#" + card.worldRank.ToString("N0") : "—", Primary);
             SetText(countryRankValue, card.hasScore && card.countryRank > 0 ? "#" + card.countryRank.ToString("N0") : "—", Secondary);
             SetText(cityRankValue, card.hasScore && card.cityRank > 0 ? "#" + card.cityRank.ToString("N0") : "—", Secondary);
-            SetText(highScoreValue, card.bestScore.ToString("N0"), Gold);
+            SetText(highScoreValue, card.hasScore ? card.bestScore.ToString("N0") : "—", Gold);
         }
 
         // ------------------------------------------------------------------

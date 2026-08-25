@@ -272,8 +272,8 @@ PlayerSettings:
   AndroidTargetArchitectures: 2
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
-  AndroidKeystoreName: D:/imp key.keystore
-  AndroidKeyaliasName: 'faizan '
+  AndroidKeystoreName: D:/impkey2.keystore
+  AndroidKeyaliasName: faizan
   AndroidEnableArmv9SecurityFeatures: 0
   AndroidEnableArm64MTE: 0
   AndroidBuildApkPerCpuArchitecture: 0

@@ -68,6 +68,18 @@ namespace WrongDirection.UI
             arrow.gameObject.SetActive(false);
             timerFill.fillAmount = 1f;
             _timerRunning = false;
+
+            // BeginRun publishes the score/combo/lives reset before this screen
+            // is enabled, so OnEnable subscribes too late to hear it and the
+            // labels would still read the previous run's values (a retry showed
+            // the last run's score until the first point was earned). Seed from
+            // the authoritative state instead of trusting the event burst.
+            if (GameManager.Exists)
+            {
+                HandleScore(GameManager.Instance.Score, 0);
+                HandleCombo(GameManager.Instance.Combo);
+                HandleLives(GameManager.Instance.Lives);
+            }
         }
 
         private void Update()
