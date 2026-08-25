@@ -191,6 +191,9 @@ namespace WrongDirection.UI
         {
             if (countryValue != null) countryValue.text = string.IsNullOrEmpty(_pendingCDisp) ? "TAP TO SELECT" : _pendingCDisp;
             if (cityValue != null) cityValue.text = string.IsNullOrEmpty(_pendingCityDisp) ? "OPTIONAL" : _pendingCityDisp;
+            // CONFIRM stays dead until a country is picked — an enabled-looking
+            // button that only ever answers "PICK A COUNTRY FIRST" is a dead end.
+            if (confirmButton != null) confirmButton.interactable = !string.IsNullOrEmpty(_pendingCC);
         }
 
         private void ConfirmRegion()
@@ -198,6 +201,9 @@ namespace WrongDirection.UI
             if (string.IsNullOrEmpty(_pendingCC)) { SetStatus("PICK A COUNTRY FIRST", Err); return; }
             if (!LeaderboardManager.Exists) { SetStatus("UNAVAILABLE", Err); return; }
             SetStatus("SAVING…", Info);
+            // One request per tap: the button re-opens only on a failure the
+            // player can act on (the success path closes the panel).
+            if (confirmButton != null) confirmButton.interactable = false;
             var region = new RegionInfo
             {
                 countryCode = _pendingCC, countryDisplay = _pendingCDisp,
@@ -205,8 +211,10 @@ namespace WrongDirection.UI
             };
             LeaderboardManager.Instance.UpdateRegion(region, res =>
             {
-                if (res.Ok) { var cb = _onDone; CloseImmediate(); cb?.Invoke(); }
-                else if (res.status == LeaderboardStatus.RegionLocked)
+                if (res.Ok) { var cb = _onDone; CloseImmediate(); cb?.Invoke(); return; }
+
+                if (confirmButton != null) confirmButton.interactable = true;
+                if (res.status == LeaderboardStatus.RegionLocked)
                     SetStatus("REGION CAN CHANGE AGAIN\nAFTER 30 DAYS", Err);
                 else if (res.status == LeaderboardStatus.Offline)
                     SetStatus("OFFLINE — TRY AGAIN", Err);
@@ -232,8 +240,10 @@ namespace WrongDirection.UI
             if (!LeaderboardManager.Exists) return;
             string name = nameInput != null ? nameInput.text : "";
             if (nameStatus != null) { nameStatus.text = "SAVING…"; nameStatus.color = Info; }
+            if (nameConfirmButton != null) nameConfirmButton.interactable = false;
             LeaderboardManager.Instance.UpdateDisplayName(name, res =>
             {
+                if (nameConfirmButton != null) nameConfirmButton.interactable = true;
                 if (res.Ok)
                 {
                     var cb = _onNameDone;

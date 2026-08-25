@@ -126,6 +126,69 @@ namespace WrongDirection.Testing
         private void Start() => StartCoroutine(Main());
 
         // ------------------------------------------------------------------
+        // Run-state watchdog — the regression test for "fake GAME OVER during
+        // active gameplay". Runs every frame for the whole session and asserts
+        // the invariant in both directions:
+        //   GAME OVER UI visible  <=>  GameManager.IsRunOver
+        // It also rejects any full-screen overlay that *reads* as a run ending
+        // while the run is live (the chaos blackout used to say GAME OVER).
+        // ------------------------------------------------------------------
+
+        private GameObject _goPanel, _blackoutPanel;
+        private TMP_Text _blackoutHeadline;
+        private int _goVisibleWhilePlaying;      // frames the real panel was up mid-run
+        private int _blackoutSaidGameOver;       // frames the blackout impersonated one
+        private int _blackoutAboveGameOver;      // frames the blackout outranked the real panel
+        private int _goShownFrames, _watchFrames;
+
+        private void Update()
+        {
+            if (!GameManager.Exists) return;
+            _watchFrames++;
+
+            if (_goPanel == null) _goPanel = FindPanel("GameOverScreen");
+            if (_blackoutPanel == null)
+            {
+                _blackoutPanel = FindPanel("FakeGameOver");
+                if (_blackoutPanel != null)
+                {
+                    var head = _blackoutPanel.transform.Find("FakeGameOverText");
+                    if (head != null) _blackoutHeadline = head.GetComponent<TMP_Text>();
+                }
+            }
+
+            var gm = GameManager.Instance;
+            bool goVisible = Visible(_goPanel);
+            bool blackoutVisible = Visible(_blackoutPanel);
+
+            if (goVisible) _goShownFrames++;
+
+            // Direction 1: the real screen may never be up while a run is live.
+            if (goVisible && gm.RunActive && ++_goVisibleWhilePlaying == 1)
+                Bug($"GameOverScreen visible while run {gm.RunId} is ACTIVE (state {gm.State})");
+
+            // Direction 2: no other overlay may impersonate it mid-run.
+            if (blackoutVisible && gm.RunActive && _blackoutHeadline != null
+                && _blackoutHeadline.text.Replace(" ", string.Empty).ToUpperInvariant().Contains("GAMEOVER")
+                && ++_blackoutSaidGameOver == 1)
+                Bug($"Chaos blackout reads \"{_blackoutHeadline.text}\" while run {gm.RunId} is ACTIVE");
+
+            // Draw order: the blackout must never cover the real screen.
+            if (blackoutVisible && goVisible && _goPanel != null && _blackoutPanel != null
+                && _blackoutPanel.transform.GetSiblingIndex() > _goPanel.transform.GetSiblingIndex()
+                && ++_blackoutAboveGameOver == 1)
+                Bug("Chaos blackout renders above GameOverScreen (sibling order)");
+        }
+
+        /// <summary>Alpha-based overlay visibility — never activeInHierarchy alone.</summary>
+        private static bool Visible(GameObject panel)
+        {
+            if (panel == null || !panel.activeInHierarchy) return false;
+            var group = panel.GetComponent<CanvasGroup>();
+            return group == null || group.alpha > 0.1f;
+        }
+
+        // ------------------------------------------------------------------
         // Event mirrors + inline invariant checks
         // ------------------------------------------------------------------
 
@@ -492,6 +555,18 @@ namespace WrongDirection.Testing
                   && _chaosSeen.Contains(ChaosType.MirrorInput)
                   && _chaosSeen.Contains(ChaosType.FakeInstructions),
                 "All 3 input/deception chaos types exercised with correct answers");
+
+            // --- Run-state invariant (fake-game-over regression) ---------------
+            Check(_goVisibleWhilePlaying == 0,
+                $"GAME OVER UI never visible during an ACTIVE run ({_watchFrames} frames watched)");
+            Check(_blackoutSaidGameOver == 0,
+                "No mid-run overlay impersonates GAME OVER (chaos blackout re-skinned)");
+            Check(_blackoutAboveGameOver == 0,
+                "Chaos blackout never renders above the real GameOverScreen");
+            Check(_chaosSeen.Contains(ChaosType.FakeGameOver),
+                "Chaos blackout (ChaosType.FakeGameOver) actually fired during the soak");
+            Check(_goShownFrames > 0,
+                $"Real death still shows GAME OVER ({_goShownFrames} frames, {_runsEnded} runs ended)");
 
             // --- PROGRESS screen (Statistics + Achievements tabs) --------------
             yield return VerifyProgressScreen();

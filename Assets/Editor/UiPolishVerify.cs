@@ -7,6 +7,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
+using WrongDirection.Managers;
+using WrongDirection.UI;
 
 namespace WrongDirection.EditorTools
 {
@@ -17,6 +19,12 @@ namespace WrongDirection.EditorTools
     /// aspect ratios (tall phone, reference phone, 4:3 tablet). Results land
     /// in Temp/UiPolish/report.md. Can be triggered externally by touching
     /// Temp/ui_polish_run before a domain reload.
+    ///
+    /// The sentinel is consumed by the static ctor below, so it only fires on
+    /// a DOMAIN RELOAD — arming it while the editor is idle does nothing, and
+    /// it will sit armed indefinitely. Arm it FIRST, then force a reload (edit
+    /// any script, or enter play mode). Note also that Unity wipes Temp/ on
+    /// restart, so a previous run's report.md and PNGs disappear with it.
     /// </summary>
     [InitializeOnLoad]
     public static class UiPolishVerify
@@ -93,6 +101,8 @@ namespace WrongDirection.EditorTools
             // UIManager shows one screen at a time, so captures must too.
             Transform hud = root.Find("GameplayHUD");
 
+            VerifyRunEndWiring(report, root);
+
             // Sample worst-case dynamic text so screenshots and the audit see
             // realistic content, not empty labels.
             SetText(menu, "HighScore", "BEST 2345");
@@ -107,6 +117,21 @@ namespace WrongDirection.EditorTools
             SetText(gameOver, "Content/RetryTipButton/Label",
                 "You died ONE step from combo 50 — that swipe would have restored a heart.");
             SetText(gameOver, "RunCount", "RUN 3 THIS SESSION");
+            // SETTINGS value column: the builder ships these empty (the real
+            // strings come from SettingsOverlay.Refresh at runtime), so without
+            // this the screenshots and the label/value collision check below
+            // both audit a blank column. Longest string each row can produce.
+            SetText(settings, "Content/InputRow/Value", "SWIPE");
+            SetText(settings, "Content/DifficultyRow/Value", "NORMAL");
+            SetText(settings, "Content/LeftHandRow/Value", "OFF");
+            SetText(settings, "Content/VibrationRow/Value", "OFF");
+            SetText(settings, "Content/MusicRow/Value", "100%");
+            SetText(settings, "Content/SfxRow/Value", "100%");
+            SetText(settings, "Content/ParticlesRow/Value", "OFF");
+            SetText(settings, "Content/FpsRow/Value", "120");
+            SetText(settings, "Content/FlashesRow/Value", "OFF");
+            SetText(settings, "Content/ColorblindRow/Value", "OFF");
+            SetText(settings, "Content/MotionRow/Value", "OFF");
             SetText(rulebook, "Content/Body",
                 "<color=#FFFFFF>WHITE</color> — swipe the OPPOSITE direction.\n\n" +
                 "<color=#168CFF>BLUE</color> — swipe the SAME direction.\n\n" +
@@ -127,6 +152,7 @@ namespace WrongDirection.EditorTools
                     var stack = new[]
                     {
                         menu.Find("BottomStack/PlayButton"),
+                        menu.Find("BottomStack/RankingsButton"),
                         menu.Find("BottomStack/ProgressButton"),
                         menu.Find("BottomStack/SettingsButton"),
                         menu.Find("BottomStack/HowToPlayButton"),
@@ -134,8 +160,58 @@ namespace WrongDirection.EditorTools
                         menu.Find("BottomStack/DailyCountdown"),
                     };
                     CheckOrderAndOverlap(report, root, "MENU stack", stack);
+                    // The blank band before DAILY CHALLENGE is a 40px spacer plus
+                    // the layout's two 10px gaps. It was 100px before RANKINGS
+                    // joined the stack; the shortest supported canvas (1536x2048
+                    // resolves to 1663 reference units tall) has no height left to
+                    // give back, and inflating the stack is explicitly out of
+                    // scope. 50px still reads as ~5x the 10px inter-button gap.
                     var gap = Gap(root, menu.Find("BottomStack/HowToPlayButton"), menu.Find("BottomStack/DailyChallengeButton"));
-                    Check(report, gap >= 100f, $"MENU blank gap before DAILY CHALLENGE = {gap:0}px (want >= 100)");
+                    Check(report, gap >= 50f, $"MENU blank gap before DAILY CHALLENGE = {gap:0}px (want >= 50)");
+
+                    // The 4:3 canvas is 257 reference units shorter than 1080x1920,
+                    // so the top-anchored info lines and the bottom-anchored stack
+                    // close in on the mid-anchored hero tile. A bare overlap test
+                    // is not enough here: the tile idle-floats +/-6px and breathes
+                    // 2%, so a gap that merely tests "not overlapping" at rest can
+                    // still collide in motion. Assert real clearance instead.
+                    // Only the opaque TutorialArrow is asserted — MenuTileGlow /
+                    // MenuSuccessFlash are soft alpha-0.12 halos whose bounds
+                    // intentionally feather past their neighbours.
+                    var tileArrow = menu.Find("MenuTilePivot/TutorialArrow");
+                    if (tileArrow == null)
+                    {
+                        report.AppendLine("FAIL MENU hero tile: MenuTilePivot/TutorialArrow missing");
+                    }
+                    else
+                    {
+                        var tileR = R(root, tileArrow);
+                        foreach (var neighbour in new[]
+                                 {
+                                     menu.Find("Title"), menu.Find("HighScore"), menu.Find("DayStreak"),
+                                     menu.Find("SchemeButton"), menu.Find("Coins"),
+                                     menu.Find("BottomStack/PlayButton"),
+                                 })
+                        {
+                            if (neighbour == null) continue;
+                            Check(report, !Overlaps(tileR, R(root, neighbour)),
+                                $"MENU hero tile clear of {neighbour.name}");
+                        }
+                        // Vertical breathing room against the two elements the
+                        // tile is sandwiched between (float 6px + breathe).
+                        var above = menu.Find("DayStreak");
+                        var below = menu.Find("BottomStack/PlayButton");
+                        if (above != null)
+                        {
+                            var g = Gap(root, above, tileArrow);
+                            Check(report, g >= 12f, $"MENU hero tile clearance under DayStreak = {g:0.#}px (want >= 12)");
+                        }
+                        if (below != null)
+                        {
+                            var g = Gap(root, tileArrow, below);
+                            Check(report, g >= 12f, $"MENU hero tile clearance above PLAY = {g:0.#}px (want >= 12)");
+                        }
+                    }
 
                     var scheme = R(root, menu.Find("SchemeButton"));
                     var coins = R(root, menu.Find("Coins"));
@@ -205,6 +281,32 @@ namespace WrongDirection.EditorTools
                         $"SETTINGS blank gap above CLOSE = {lowest - closeR.yMax:0}px");
                     CheckOrderAndOverlap(report, root, "SETTINGS rows",
                         rows.ToArray());
+
+                    // Label and value share ONE full-width rect (Left- vs
+                    // Right-aligned), so nothing but the row's spare width
+                    // keeps a long label off a long value — a plain rect
+                    // overlap test can never catch it because the rects are
+                    // identical by construction. Measure the laid-out glyphs.
+                    bool labelValueClear = true;
+                    string tightestRow = "(none)";
+                    float tightestSpare = float.MaxValue;
+                    foreach (var row in rows)
+                    {
+                        var titleT = row.Find("Title");
+                        var valueT = row.Find("Value");
+                        if (titleT == null || valueT == null) continue; // section header
+                        var tt = titleT.GetComponent<TMP_Text>();
+                        var vt = valueT.GetComponent<TMP_Text>();
+                        if (tt == null || vt == null) continue;
+                        tt.ForceMeshUpdate();
+                        vt.ForceMeshUpdate();
+                        float spare = ((RectTransform)row).rect.width
+                            - tt.preferredWidth - vt.preferredWidth;
+                        if (spare < tightestSpare) { tightestSpare = spare; tightestRow = row.name; }
+                        if (spare < 24f) labelValueClear = false;
+                    }
+                    Check(report, labelValueClear,
+                        $"SETTINGS label/value never collide: tightest {tightestRow} has {tightestSpare:0.#}px spare (want >= 24)");
                 });
 
                 // RULEBOOK (HOW TO PLAY guide) --------------------------------
@@ -261,6 +363,77 @@ namespace WrongDirection.EditorTools
                 ShowOnly(menu, gameOver, settings, rulebook, hud);
                 report.AppendLine();
             }
+        }
+
+        // ------------------------------------------------------------------
+
+        /// <summary>
+        /// Scene-level audit of the run-end presentation boundary. The
+        /// invariant under test: GAME OVER UI == AUTHORITATIVE RUN ENDED, so
+        /// there must be exactly one Game Over screen, and the chaos blackout
+        /// must neither impersonate it nor outrank it in draw order.
+        /// </summary>
+        private static void VerifyRunEndWiring(StringBuilder report, Transform root)
+        {
+            report.AppendLine("## Run-end wiring (fake-game-over regression)");
+
+            var screens = Object.FindObjectsByType<GameOverScreen>(FindObjectsInactive.Include);
+            Check(report, screens.Length == 1, $"Exactly one GameOverScreen in the scene (found {screens.Length})");
+
+            var gameOver = root.Find("GameOverScreen");
+            var blackout = root.Find("FakeGameOver");
+            Check(report, gameOver != null && blackout != null,
+                "GameOverScreen and FakeGameOver panels both present");
+            if (gameOver == null || blackout == null) { report.AppendLine(); return; }
+
+            Check(report, blackout.GetSiblingIndex() < gameOver.GetSiblingIndex(),
+                $"Chaos blackout draws BELOW GameOverScreen (sibling {blackout.GetSiblingIndex()} < {gameOver.GetSiblingIndex()})");
+
+            var blackoutGroup = blackout.GetComponent<CanvasGroup>();
+            Check(report, blackoutGroup != null && blackoutGroup.alpha == 0f && !blackoutGroup.blocksRaycasts,
+                "Chaos blackout ships hidden (CanvasGroup alpha 0, blocksRaycasts off)");
+
+            var headline = blackout.Find("FakeGameOverText");
+            var headlineText = headline != null ? headline.GetComponent<TMP_Text>() : null;
+            string copy = headlineText != null ? headlineText.text.Replace(" ", string.Empty).ToUpperInvariant() : "<none>";
+            Check(report, headlineText != null && !copy.Contains("GAMEOVER"),
+                $"Chaos blackout headline does not read as a run ending (\"{(headlineText != null ? headlineText.text : "<none>")}\")");
+            Check(report, blackout.Find("FakeGameOverSubText") != null && blackout.Find("ChaosChip") != null,
+                "Chaos blackout carries its CHAOS chip + instruction sub-line");
+
+            // Serialized references the effect depends on at runtime.
+            var feedback = Object.FindAnyObjectByType<FeedbackManager>(FindObjectsInactive.Include);
+            Check(report, feedback != null, "FeedbackManager present");
+            if (feedback != null)
+            {
+                var so = new SerializedObject(feedback);
+                foreach (var field in new[] { "gameOverGroup", "fakeGameOverGroup", "fakeGameOverText", "fakeGameOverSubText" })
+                {
+                    var prop = so.FindProperty(field);
+                    Check(report, prop != null && prop.objectReferenceValue != null,
+                        $"FeedbackManager.{field} wired");
+                }
+            }
+
+            // Game Over buttons must survive the rebuild — the retry path is the
+            // only way out of a terminal run.
+            var goSo = new SerializedObject(screens.Length == 1 ? screens[0] : null);
+            if (screens.Length == 1)
+                foreach (var field in new[] { "retryButton", "menuButton", "scoreText", "bestText", "statsText", "newHighScoreBadge" })
+                {
+                    var prop = goSo.FindProperty(field);
+                    Check(report, prop != null && prop.objectReferenceValue != null,
+                        $"GameOverScreen.{field} wired");
+                }
+
+            // Missing scripts anywhere in the canvas would silently drop a listener.
+            int missing = 0;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                foreach (var c in t.GetComponents<Component>())
+                    if (c == null) missing++;
+            Check(report, missing == 0, $"No missing scripts under Canvas ({missing} found)");
+
+            report.AppendLine();
         }
 
         // ------------------------------------------------------------------

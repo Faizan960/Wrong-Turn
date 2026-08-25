@@ -83,7 +83,7 @@ namespace WrongDirection.Presentation
                 case ChaosType.ReverseControls:  return "REVERSED CONTROLS";
                 case ChaosType.MirrorInput:      return "MIRRORED INPUT";
                 case ChaosType.FakeInstructions: return "FAKE INSTRUCTIONS";
-                case ChaosType.FakeGameOver:     return "FAKE GAME OVER";
+                case ChaosType.FakeGameOver:     return "BLACKOUT";
                 case ChaosType.TimeSlow:         return "TIME SLOW";
                 case ChaosType.TimeFast:         return "TIME FAST";
                 case ChaosType.ScreenRotate:     return "SCREEN ROTATE";
@@ -100,7 +100,7 @@ namespace WrongDirection.Presentation
                 case ChaosType.ReverseControls:  return "Every swipe registers as its opposite.";
                 case ChaosType.MirrorInput:      return "Left and right are swapped — up and down are fine.";
                 case ChaosType.FakeInstructions: return "The arrow points the WRONG way. The color still tells the truth.";
-                case ChaosType.FakeGameOver:     return "Not dead. Don't touch anything.";
+                case ChaosType.FakeGameOver:     return "The screen goes dark. You're still alive — don't touch anything.";
                 case ChaosType.TimeSlow:         return "The world runs slow — your timer does too.";
                 case ChaosType.TimeFast:         return "The world runs fast — snap answers.";
                 case ChaosType.ScreenRotate:     return "The view rotates. Read the arrow, not the room.";

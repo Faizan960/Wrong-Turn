@@ -257,7 +257,14 @@ namespace WrongDirection.UI
             }
 
             if (dividerRow != null)
-                dividerRow.SetActive(hasAround && dividerAt > 0 && dividerAt < n);
+            {
+                bool showDivider = hasAround && dividerAt > 0 && dividerAt < n;
+                dividerRow.SetActive(showDivider);
+                // The list is a VerticalLayoutGroup, so sibling order alone puts
+                // the separator at the real top/around boundary — it no longer
+                // assumes the server returned exactly ten top entries.
+                if (showDivider) dividerRow.transform.SetSiblingIndex(dividerAt);
+            }
 
             // Empty board handling (§27): only the viewer, or nobody.
             if (emptyText != null)

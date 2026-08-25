@@ -36,6 +36,27 @@ namespace WrongDirection.Managers
 
         public GameState State { get; private set; } = GameState.Boot;
 
+        /// <summary>
+        /// True only while a scored run is authoritatively in progress. This is
+        /// the single gate presentation must consult before drawing anything
+        /// that could read as a run-ending state.
+        /// </summary>
+        public bool RunActive => State == GameState.Playing;
+
+        /// <summary>
+        /// The authoritative terminal condition. Game Over UI may only be
+        /// visible while this is true — see GameOverScreen.Show().
+        /// </summary>
+        public bool IsRunOver => State == GameState.GameOver;
+
+        /// <summary>
+        /// Generation counter for the current run, bumped once per BeginRun.
+        /// Delayed work (tweens, coroutines, animation beats) stamps itself
+        /// with this and bails when it wakes up inside a different run, so a
+        /// previous run's callback can never touch the current one.
+        /// </summary>
+        public int RunId { get; private set; }
+
         // --- Run state ---
         public int Score { get; private set; }
         public int Combo { get; private set; }
@@ -165,7 +186,7 @@ namespace WrongDirection.Managers
             _resumingViaContinue = false;
 
             Lives = 1;
-            GameEvents.RaiseLivesChanged(Lives);
+            PublishLives();
             ScheduleNextInstruction(0.8f);
         }
 
@@ -238,6 +259,7 @@ namespace WrongDirection.Managers
 
         private void BeginRun()
         {
+            RunId++;                          // invalidates every previous run's pending callback
             Score = 0;
             Combo = 0;
             MaxCombo = 0;
@@ -262,6 +284,8 @@ namespace WrongDirection.Managers
             GameEvents.RaiseLivesChanged(Lives);
             GameEvents.RaiseScoreChanged(0, 0);
             GameEvents.RaiseComboChanged(0);
+
+            RunLog($"RunStarted id={RunId} lives={Lives}");
 
             ScheduleNextInstruction(0.6f); // brief beat before the first arrow
         }
@@ -440,7 +464,7 @@ namespace WrongDirection.Managers
                 if (heal && Lives < _maxLives)
                 {
                     Lives++;
-                    GameEvents.RaiseLivesChanged(Lives);
+                    PublishLives();
                     GameEvents.RaiseLifeRestored(Lives);
                 }
                 if (_current.Color == ColorRule.Recovery)
@@ -463,7 +487,7 @@ namespace WrongDirection.Managers
                 Combo = 0;
                 Lives--;
                 GameEvents.RaiseComboChanged(0);
-                GameEvents.RaiseLivesChanged(Lives);
+                PublishLives();
 
                 if (Lives <= 0)
                 {
@@ -491,6 +515,18 @@ namespace WrongDirection.Managers
 
         private void EndRun()
         {
+            // Only an authoritatively active run can end. Guards double-fire
+            // from a re-entrant answer resolution and keeps OnRunEnded at
+            // exactly one raise per run ending.
+            if (State != GameState.Playing) return;
+
+            // 1-4. Stop the gameplay loop before anything observes the end:
+            // no more input accepted, no pending spawn, no live deadline.
+            _awaitingInput = false;
+            _nextSpawnAt = -1f;
+            _instructionDeadline = 0f;
+            DismissDiscoveryCard();   // no-op unless a discovery card is up
+
             float avgReaction = _correctCount > 0 ? _reactionSum / _correctCount : 0f;
 
             // High score via SaveManager; lifetime stats aggregate themselves
@@ -499,8 +535,27 @@ namespace WrongDirection.Managers
             bool newHigh = SaveManager.Instance.RecordRun(provisional, _easyRun);
             var result = new RunResult(Score, MaxCombo, _correctCount, _wrongCount, avgReaction, newHigh, _easyRun);
 
+            // 5. Mark the run terminal. UIManager shows the Game Over screen on
+            // this transition — so the authoritative state is already GameOver
+            // before any presentation runs. 6-8 follow on the event.
+            RunLog($"RunEnded id={RunId} reason=Death score={Score}");
             SetState(GameState.GameOver);
             GameEvents.RaiseRunEnded(result);
+        }
+
+        /// <summary>Run-lifecycle diagnostics; compiled out of release builds.</summary>
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        private static void RunLog(string message) => Debug.Log($"[GAME] {message}");
+
+        /// <summary>
+        /// Single funnel for in-run life changes so the diagnostic sits in one
+        /// place and can't drift from the value listeners actually receive.
+        /// </summary>
+        private void PublishLives()
+        {
+            RunLog($"LifeChanged lives={Lives} run={RunId}");
+            GameEvents.RaiseLivesChanged(Lives);
         }
 
         // ------------------------------------------------------------------

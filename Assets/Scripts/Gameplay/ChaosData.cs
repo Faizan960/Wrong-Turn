@@ -12,7 +12,9 @@ namespace WrongDirection.Core
         ScreenRotate,      // presentation: camera/canvas rotates 90/180/270°
         ScreenShake,       // presentation: sustained shake
         ReverseControls,   // gameplay: every input becomes its opposite
-        FakeGameOver,      // gameplay+presentation: "GAME OVER … JUST KIDDING"
+        FakeGameOver,      // gameplay+presentation: CHAOS BLACKOUT — screen goes
+                           //   dark, run stays live. Name is persisted in
+                           //   PlayerData.discoveredChaos, so it never changes.
         TimeSlow,          // gameplay: timeScale down
         TimeFast,          // gameplay: timeScale up
         MirrorInput,       // gameplay: left↔right swapped

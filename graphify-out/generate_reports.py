@@ -20,7 +20,7 @@ OUT = ROOT / "graphify-out"
 SOURCES = list((ROOT / "Assets" / "Scripts").rglob("*.cs")) + [ROOT / "Assets" / "Editor" / "BuildMainScene.cs"]
 
 TYPE_DECL = re.compile(r"\b(?:class|struct|enum|interface)\s+([A-Za-z_]\w*)")
-SESSION_DAY = datetime.date(2026, 7, 19)
+SESSION_DAY = datetime.date(2026, 8, 24)
 
 # Phase 7 (onboarding) touches gameplay authorities + UI/Presentation by design.
 ALLOWED_MODIFY_DIRS = ("Assets/Scripts",)

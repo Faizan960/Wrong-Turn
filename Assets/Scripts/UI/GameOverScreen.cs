@@ -21,6 +21,34 @@ namespace WrongDirection.UI
 
         public override GameState HandledState => GameState.GameOver;
 
+        /// <summary>
+        /// The invariant this screen exists to protect: GAME OVER UI ==
+        /// AUTHORITATIVE RUN ENDED. UIManager already routes on GameState, so
+        /// this is defence in depth — any caller that tries to present the
+        /// screen while a run is live is refused here rather than trusted.
+        /// Presentation still decides nothing; it only reads the authority.
+        /// </summary>
+        public override void Show()
+        {
+            if (!GameManager.Exists || !GameManager.Instance.IsRunOver)
+            {
+                RunWarn("GameOverShown REFUSED — run has not authoritatively ended");
+                return;
+            }
+
+            base.Show();
+            RunLog($"GameOverShown id={GameManager.Instance.RunId}");
+        }
+
+        /// <summary>Run-lifecycle diagnostics; compiled out of release builds.</summary>
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        private static void RunLog(string message) => Debug.Log($"[GAME] {message}");
+
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        [System.Diagnostics.Conditional("DEVELOPMENT_BUILD")]
+        private static void RunWarn(string message) => Debug.LogWarning($"[GAME] {message}");
+
         private void Awake()
         {
             retryButton.onClick.AddListener(() => GameManager.Instance.Restart());

@@ -11,6 +11,12 @@ $refs += "-r:`"$u\NetStandard\compat\2.1.0\shims\netfx\mscorlib.dll`""
 $refs += "-r:`"$proj\Library\ScriptAssemblies\UnityEngine.UI.dll`""
 $refs += "-r:`"$proj\Library\ScriptAssemblies\Unity.TextMeshPro.dll`""
 $refs += "-r:`"$proj\Assets\Plugins\Demigiant\DOTween\DOTween.dll`""
+# LevelPlay + Unity Services (LevelPlayAdProvider): runtime assemblies only,
+# never the *.Editor ones — they pull in editor-only types this check can't see.
+$refs += "-r:`"$proj\Library\ScriptAssemblies\Unity.LevelPlay.dll`""
+$refs += Get-ChildItem "$proj\Library\ScriptAssemblies\Unity.Services.*.dll" |
+    Where-Object { $_.Name -notmatch '\.Editor\.dll$' } |
+    ForEach-Object { "-r:`"$($_.FullName)`"" }
 
 $sources = @()
 $sources += Get-ChildItem "$proj\Assets\Scripts" -Recurse -Filter *.cs | ForEach-Object { "`"$($_.FullName)`"" }

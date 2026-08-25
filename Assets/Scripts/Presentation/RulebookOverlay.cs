@@ -49,7 +49,7 @@ namespace WrongDirection.Presentation
             "REVERSE — every swipe becomes its opposite.\n" +
             "MIRROR — left and right swap; up and down are fine.\n" +
             "FAKE INSTRUCTIONS — the arrow points the wrong way; the color stays honest.\n" +
-            "FAKE GAME OVER — you're not dead; touch nothing.\n" +
+            "BLACKOUT — the screen goes dark; you're still alive, touch nothing.\n" +
             "TIME SLOW — everything runs slow, your timer too.\n" +
             "TIME FAST — everything runs fast; snap answers.\n" +
             "ROTATE — the view turns; read the arrow, not the room.\n" +

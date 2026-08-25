@@ -283,13 +283,21 @@ namespace WrongDirection.EditorTools
             var menu = Panel("MenuScreen", canvasRoot).AddComponent<MenuScreen>();
             var menuT = menu.transform;
             // Typography-only menu (P4): no boxes, no panels — invisible hit areas.
-            var title = Text("Title", menuT, "WRONG\nTURN", 120, TopCenter, new Vector2(0f, -330f), new Vector2(960f, 320f),
+            //
+            // Vertical rhythm is tuned for the SHORTEST supported canvas, not the
+            // reference one. With CanvasScaler match=0.5 a 1536x2048 (4:3) screen
+            // resolves to a 1247x1663 reference-unit canvas — 257 units shorter
+            // than 1080x1920 — so the top cluster (top-anchored) and the bottom
+            // stack (bottom-anchored) close in on the mid-anchored hero tile. The
+            // offsets below leave the tile a clear band at 1663 and simply gain
+            // extra air around it on taller canvases.
+            var title = Text("Title", menuT, "WRONG\nTURN", 120, TopCenter, new Vector2(0f, -190f), new Vector2(960f, 290f),
                 font: _fontDisplay);
             // Phase 5.5 hierarchy — BEST is tertiary info (#A0A0A0 @ 75%).
-            var highScore = Text("HighScore", menuT, "", 54, TopCenter, new Vector2(0f, -660f), new Vector2(600f, 60f),
+            var highScore = Text("HighScore", menuT, "", 54, TopCenter, new Vector2(0f, -500f), new Vector2(600f, 60f),
                 font: _fontHeading, color: UI_TERTIARY_TEXT);
             // Day-streak line (Phase 5 Part 7) — DayStreak fills or blanks it.
-            var streakText = Text("DayStreak", menuT, "", 34, TopCenter, new Vector2(0f, -725f), new Vector2(600f, 50f),
+            var streakText = Text("DayStreak", menuT, "", 34, TopCenter, new Vector2(0f, -565f), new Vector2(600f, 50f),
                 font: _fontHeading, color: new Color32(255, 122, 0, 255));
             var coinGold = new Color(ComboCol.r, ComboCol.g, ComboCol.b, 0.9f); // SECONDARY-tier opacity, gold hue kept
             // Icon and amount share the MODE toggle's vertical center (-110)
@@ -303,7 +311,18 @@ namespace WrongDirection.EditorTools
             // tutorial swipe flashes green on each taught "success".
             var menuTilePivot = new GameObject("MenuTilePivot", typeof(RectTransform));
             menuTilePivot.transform.SetParent(menuT, false);
-            SetRect((RectTransform)menuTilePivot.transform, MidCenter, new Vector2(0f, 60f), Vector2.zero);
+            // +98 up from mid centres the tile in the free band between the top
+            // cluster and the bottom stack, and the centring holds on EVERY
+            // canvas: DayStreak is top-anchored (bottom edge a constant 615
+            // from the top) and the stack is bottom-anchored (top edge a
+            // constant 810 from the bottom), so the band's midpoint always sits
+            // (810-615)/2 = 97.5 above the canvas centre regardless of height.
+            // At 1663 (4:3) that leaves the 200px tile ~19px of air on each
+            // side — enough to absorb the 6px idle float plus the 2% breathe.
+            // Glow/flash are soft, raycast-off halos (alpha 0.12) whose bounds
+            // intentionally feather past neighbours; only the opaque
+            // TutorialArrow must stay clear, and it does.
+            SetRect((RectTransform)menuTilePivot.transform, MidCenter, new Vector2(0f, 98f), Vector2.zero);
             var menuTileGlow = Img("MenuTileGlow", menuTilePivot.transform, glowSprite,
                 new Color(AccentBlue.r / 255f, AccentBlue.g / 255f, AccentBlue.b / 255f, 0.12f),
                 MidCenter, Vector2.zero, new Vector2(340f, 340f));
@@ -333,7 +352,9 @@ namespace WrongDirection.EditorTools
             // the stack so the VerticalLayoutGroup guarantees zero overlaps.
             var menuBottom = Panel("BottomStack", menuT);
             var menuBottomRect = (RectTransform)menuBottom.transform;
-            SetRect(menuBottomRect, BottomCenter, new Vector2(0f, 120f), new Vector2(900f, 760f));
+            // 80px above the safe-area floor, 730 tall for 720 of stacked
+            // content — the 4:3 canvas has no spare height to give away.
+            SetRect(menuBottomRect, BottomCenter, new Vector2(0f, 80f), new Vector2(900f, 730f));
             var menuVlg = menuBottom.AddComponent<UnityEngine.UI.VerticalLayoutGroup>();
             menuVlg.childAlignment = TextAnchor.LowerCenter;
             menuVlg.childControlHeight = false;
@@ -342,7 +363,7 @@ namespace WrongDirection.EditorTools
             menuVlg.childForceExpandWidth = false;
             menuVlg.spacing = 10f;
 
-            var playBtn = ButtonWithLabel("PlayButton", menuBottom.transform, "TAP TO PLAY", 72, MidCenter, Vector2.zero, new Vector2(900f, 180f), uiSprite, out var playLabel);
+            var playBtn = ButtonWithLabel("PlayButton", menuBottom.transform, "TAP TO PLAY", 72, MidCenter, Vector2.zero, new Vector2(900f, 170f), uiSprite, out var playLabel);
             SetButtonImageColor(playBtn, Color.clear);
 
             // Phase 9 — RANKINGS sits directly under PLAY (most prominent meta).
@@ -691,14 +712,29 @@ namespace WrongDirection.EditorTools
             var invertMat = EnsureInvertMaterial();
             if (invertMat != null) invertOverlay.material = invertMat;
 
+            // ---------------- Chaos blackout (ChaosType.FakeGameOver) ---------
+            // Deliberately NOT skinned like the Game Over screen: chaos accent
+            // type, a standing "CHAOS" chip and a "DON'T TOUCH ANYTHING"
+            // sub-line, no score, no buttons. The run is still live behind it.
             var fakeGo = Panel("FakeGameOver", canvasRoot);
-            fakeGo.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.95f);
+            fakeGo.AddComponent<Image>().color = new Color(0.01f, 0.01f, 0.04f, 0.94f);
             var fakeGroup = fakeGo.AddComponent<CanvasGroup>();
             fakeGroup.alpha = 0f;
             fakeGroup.interactable = false;
             fakeGroup.blocksRaycasts = false;
-            var fakeText = Text("FakeGameOverText", fakeGo.transform, "GAME OVER", 130, MidCenter, Vector2.zero, new Vector2(1000f, 240f),
-                font: _fontDisplay);
+            var fakeChip = Text("ChaosChip", fakeGo.transform, "C H A O S", 48, MidCenter, new Vector2(0f, 180f), new Vector2(900f, 90f),
+                font: _fontHeading, color: YellowRule);
+            fakeChip.alpha = 0.75f;
+            var fakeText = Text("FakeGameOverText", fakeGo.transform, "BLACKOUT", 110, MidCenter, Vector2.zero, new Vector2(1000f, 200f),
+                font: _fontDisplay, color: YellowRule);
+            var fakeSub = Text("FakeGameOverSubText", fakeGo.transform, "DON'T TOUCH ANYTHING", 44, MidCenter, new Vector2(0f, -140f), new Vector2(1000f, 90f),
+                font: _fontBody, color: UI_SECONDARY_TEXT);
+
+            // Draw order: the blackout must cover gameplay and the HUD but can
+            // never sit above the real GameOverScreen. Sibling index is the only
+            // ordering mechanism in this builder (creation order), so slot it in
+            // immediately below GameOverScreen instead of leaving it last.
+            fakeGo.transform.SetSiblingIndex(gameOverGo.transform.GetSiblingIndex());
 
             // ---------------- Serialized wiring ----------------
             Set(menu, "playButton", playBtn);
@@ -757,7 +793,10 @@ namespace WrongDirection.EditorTools
             Set(feedback, "correctBurst", correctBurst);
             Set(feedback, "fakeGameOverGroup", fakeGroup);
             Set(feedback, "fakeGameOverText", fakeText);
+            Set(feedback, "fakeGameOverSubText", fakeSub);
             Set(feedback, "invertOverlay", invertOverlay);
+            SetColor(feedback, "chaosAccent", YellowRule);
+            SetColor(feedback, "chaosRelief", EmeraldRule);
 
             var uiManager = canvasGo.GetComponent<UIManager>();
             SetArray(uiManager, "screens", new Object[] { menu, hud, gameOver });
@@ -1765,9 +1804,59 @@ namespace WrongDirection.EditorTools
             var underline = Img("TabUnderline", tabBar.transform, null, accent, MidCenter, new Vector2(-260f, -34f), new Vector2(200f, 3f));
             underline.raycastTarget = false;
 
-            // --- List rows ---
-            const float listTop = -672f;
-            const float pitch = 64f;
+            // --- List rows (scrolled) ---
+            // 16 rows x 60 + gaps = 1020 units of list under a 672-unit header.
+            // That fits 1080x1920 (1920 tall) and 1080x2340 (2120 tall) outright,
+            // but NOT 1536x2048 — match=0.5 resolves it to a 1247x1663 canvas, so
+            // the last four rows used to slide under the pinned CLOSE button and
+            // off the bottom edge. A viewport spanning tab-bar → CLOSE scrolls
+            // only when it has to: on both phone canvases all 16 rows are still
+            // visible at once with no scrollbar and no behaviour change.
+            var rankScrollGo = Panel("Scroll", contentT);
+            var rankScrollRt = (RectTransform)rankScrollGo.transform;
+            rankScrollRt.anchorMin = Vector2.zero;
+            rankScrollRt.anchorMax = Vector2.one;
+            rankScrollRt.offsetMin = new Vector2(0f, 200f);    // clears CLOSE (80 + 100 tall)
+            rankScrollRt.offsetMax = new Vector2(0f, -672f);   // clears the tab bar (-600, 64 tall)
+            var rankScroll = rankScrollGo.AddComponent<ScrollRect>();
+            rankScroll.horizontal = false;
+            rankScroll.vertical = true;
+            rankScroll.movementType = ScrollRect.MovementType.Elastic;
+            rankScroll.elasticity = 0.1f;
+            rankScroll.inertia = true;
+            rankScroll.decelerationRate = 0.135f;
+            rankScroll.scrollSensitivity = 30f;
+
+            var rankViewportGo = Panel("Viewport", rankScrollGo.transform);
+            var rankViewportImg = rankViewportGo.AddComponent<Image>();
+            rankViewportImg.color = Color.clear;   // clear, but raycasts so touch-drag registers
+            rankViewportGo.AddComponent<RectMask2D>();
+            rankScroll.viewport = (RectTransform)rankViewportGo.transform;
+
+            var rankListGo = new GameObject("ScrollContent", typeof(RectTransform));
+            rankListGo.transform.SetParent(rankViewportGo.transform, false);
+            var rankListRect = (RectTransform)rankListGo.transform;
+            rankListRect.anchorMin = new Vector2(0f, 1f);
+            rankListRect.anchorMax = new Vector2(1f, 1f);
+            rankListRect.pivot = new Vector2(0.5f, 1f);
+            rankListRect.offsetMin = Vector2.zero;
+            rankListRect.offsetMax = Vector2.zero;
+            var rankVlg = rankListGo.AddComponent<VerticalLayoutGroup>();
+            // Rows keep their fixed 900 width so the internal columns (rank at
+            // -360 … score at +300) never get squeezed on the narrowest canvas
+            // (1080x2340 resolves to 978 units wide); the group only centres and
+            // stacks them.
+            rankVlg.childAlignment = TextAnchor.UpperCenter;
+            rankVlg.childControlWidth = false;
+            rankVlg.childControlHeight = false;
+            rankVlg.childForceExpandWidth = false;
+            rankVlg.childForceExpandHeight = false;
+            rankVlg.spacing = 4f;
+            rankVlg.padding = new RectOffset(0, 0, 0, 24);
+            var rankFitter = rankListGo.AddComponent<ContentSizeFitter>();
+            rankFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            rankScroll.content = rankListRect;
+
             var rowRects = new RectTransform[RowCount];
             var rowRank = new TMP_Text[RowCount];
             var rowName = new TMP_Text[RowCount];
@@ -1775,11 +1864,14 @@ namespace WrongDirection.EditorTools
             var rowScore = new TMP_Text[RowCount];
             var rowHi = new Image[RowCount];
             for (int i = 0; i < RowCount; i++)
-                BuildRankRow(contentT, i, listTop - i * pitch, out rowRects[i], out rowRank[i], out rowName[i], out rowPublicId[i], out rowScore[i], out rowHi[i]);
+                BuildRankRow(rankListGo.transform, i, out rowRects[i], out rowRank[i], out rowName[i], out rowPublicId[i], out rowScore[i], out rowHi[i]);
 
-            // Divider between top and around (shown when a separate neighbourhood exists).
-            var divider = Text("Divider", contentT, "· · ·", 30, TopCenter, new Vector2(0f, listTop - 10 * pitch + pitch * 0.5f), new Vector2(400f, 40f),
+            // Divider between top and around (shown when a separate neighbourhood
+            // exists). Parked after the 10th row; RankingsScreen re-seats it at the
+            // real top/around boundary, which the layout group makes exact.
+            var divider = Text("Divider", rankListGo.transform, "· · ·", 30, TopCenter, Vector2.zero, new Vector2(400f, 40f),
                 font: _fontHeading, color: UI_MUTED_TEXT);
+            divider.transform.SetSiblingIndex(10);
             var dividerGo = divider.gameObject;
             dividerGo.SetActive(false);
 
@@ -1872,13 +1964,13 @@ namespace WrongDirection.EditorTools
         /// names distinguishable (§11/§14). Row height/pitch are unchanged, so the
         /// second line adds no vertical footprint and rows never overlap.
         /// </summary>
-        private static void BuildRankRow(Transform parent, int index, float y,
+        private static void BuildRankRow(Transform parent, int index,
             out RectTransform row, out TMP_Text rank, out TMP_Text name, out TMP_Text publicId, out TMP_Text score, out Image highlight)
         {
             var go = new GameObject("Row" + index, typeof(RectTransform));
             go.transform.SetParent(parent, false);
             row = (RectTransform)go.transform;
-            SetRect(row, TopCenter, new Vector2(0f, y), new Vector2(900f, 60f));
+            SetRect(row, TopCenter, Vector2.zero, new Vector2(900f, 60f));
 
             highlight = Img("Highlight", go.transform, null, new Color(87f / 255f, 162f / 255f, 230f / 255f, 0.14f),
                 MidCenter, Vector2.zero, Vector2.zero);

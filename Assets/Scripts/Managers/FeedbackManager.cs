@@ -9,8 +9,11 @@ namespace WrongDirection.Managers
     /// <summary>
     /// All juice, zero logic. Listens exclusively to GameEvents and turns
     /// gameplay outcomes into DOTween animations: shake, punch, flash,
-    /// combo popups, score bump, game-over fade. Never reads GameManager
-    /// state, never decides anything — pure presentation.
+    /// combo popups, score bump, game-over fade. Decides nothing — the only
+    /// thing it reads from GameManager is the authoritative run state, and
+    /// only as a gate: a full-screen effect is never drawn over a run that
+    /// isn't live, and delayed beats stamped with a RunId are dropped when
+    /// they wake up inside a different run.
     ///
     /// Lives in the scene (needs scene references), not a persistent singleton.
     /// All tweens are killed before reuse so no allocation storm and no
@@ -28,9 +31,14 @@ namespace WrongDirection.Managers
         [SerializeField] private ParticleSystem correctBurst;  // small particle burst, prewarmed
 
         [Header("Chaos rendering")]
-        [SerializeField] private CanvasGroup fakeGameOverGroup;   // "GAME OVER" / "JUST KIDDING" overlay
-        [SerializeField] private TMP_Text fakeGameOverText;
-        [SerializeField] private Image invertOverlay;             // fullscreen, alpha 0 (shader/negative tint)
+        // The chaos table calls this effect FakeGameOver (enum name is
+        // persisted in discoveredChaos, so it stays). On screen it is a
+        // CHAOS BLACKOUT and must never read as a run ending — the real
+        // GameOverScreen is the only thing allowed to look like one.
+        [SerializeField] private CanvasGroup fakeGameOverGroup;    // blackout overlay
+        [SerializeField] private TMP_Text fakeGameOverText;        // headline: BLACKOUT / STILL ALIVE
+        [SerializeField] private TMP_Text fakeGameOverSubText;     // sub: DON'T TOUCH ANYTHING
+        [SerializeField] private Image invertOverlay;              // fullscreen, alpha 0 (shader/negative tint)
 
         [Header("Tuning")]
         [SerializeField] private float shakeDuration = 0.25f;
@@ -39,9 +47,23 @@ namespace WrongDirection.Managers
         [SerializeField] private float flashDuration = 0.15f;
         [SerializeField] private Color wrongFlashColor = new Color(1f, 0.15f, 0.15f, 0.35f);
         [SerializeField] private Color correctFlashColor = new Color(0.2f, 1f, 0.4f, 0.12f);
+        [Tooltip("Chaos accent — blackout headline. Deliberately not a game-over colour.")]
+        [SerializeField] private Color chaosAccent = new Color32(0xFF, 0xD6, 0x00, 0xFF);
+        [Tooltip("Relief beat colour once the blackout reveals itself.")]
+        [SerializeField] private Color chaosRelief = new Color32(0x00, 0xE6, 0x76, 0xFF);
 
         private Tween _shakeTween, _flashTween, _comboTween, _scoreTween, _arrowTween;
         private Vector3 _rigHome;
+
+        // Tracked separately from _chaosTween: the blackout is a multi-beat
+        // sequence that outlives the effect's other visuals, and an untracked
+        // one could keep running past the run that started it.
+        private Tween _blackoutTween;
+        private int _blackoutRunId = -1;
+
+        // The game-over fade was untracked too — a run ended, retried fast,
+        // and its fade could still be driving the panel's alpha in the next run.
+        private Tween _gameOverTween;
 
         private void Awake()
         {
@@ -74,6 +96,7 @@ namespace WrongDirection.Managers
             GameEvents.OnRunStarted -= HandleRunStarted;
             GameEvents.OnChaosStarted -= HandleChaosStarted;
             GameEvents.OnChaosEnded -= HandleChaosEnded;
+            KillAll();   // no tween may outlive the listener that owns it
         }
 
         private void HandleRunStarted()
@@ -143,11 +166,16 @@ namespace WrongDirection.Managers
 
         private void HandleRunEnded(RunResult result)
         {
+            // A blackout still in flight must never survive into the game over
+            // screen — one dark overlay reading as an ending is enough.
+            ClearBlackout();
+
             // Fade + slow scale settle on the game over panel.
             if (gameOverGroup == null) return;
             gameOverGroup.alpha = 0f;
             gameOverGroup.transform.localScale = Vector3.one * 1.08f;
-            DOTween.Sequence()
+            _gameOverTween?.Kill();
+            _gameOverTween = DOTween.Sequence()
                 .Append(gameOverGroup.DOFade(1f, 0.4f))
                 .Join(gameOverGroup.transform.DOScale(1f, 0.5f).SetEase(Ease.OutCubic));
         }
@@ -196,20 +224,61 @@ namespace WrongDirection.Managers
                     break;
 
                 case ChaosType.FakeGameOver:
-                    if (fakeGameOverGroup != null)
-                    {
-                        fakeGameOverText.text = "GAME OVER";
-                        fakeGameOverGroup.alpha = 0f;
-                        DOTween.Sequence().SetUpdate(true)
-                            .Append(fakeGameOverGroup.DOFade(1f, 0.2f))
-                            .AppendInterval(effect.Duration * 0.7f)
-                            .AppendCallback(() => fakeGameOverText.text = "JUST KIDDING")
-                            .AppendInterval(effect.Duration * 0.3f)
-                            .Append(fakeGameOverGroup.DOFade(0f, 0.25f));
-                    }
+                    ShowBlackout(effect.Duration);
                     break;
             }
         }
+
+        /// <summary>
+        /// CHAOS BLACKOUT (ChaosType.FakeGameOver). The screen goes dark for
+        /// the effect window so the live instruction can't be read; the
+        /// gameplay side of the gag — sliding the deadline and the next spawn
+        /// past it — is GameManager's and is untouched here.
+        ///
+        /// Skinned as chaos on purpose: accent headline, "DON'T TOUCH
+        /// ANYTHING" sub-line, no score, no buttons, nothing that reads as a
+        /// run ending. Only ever drawn over an authoritatively live run, and
+        /// stamped with that run's id so a late beat can't paint over the
+        /// next one.
+        /// </summary>
+        private void ShowBlackout(float duration)
+        {
+            if (fakeGameOverGroup == null) return;
+            if (!GameManager.Exists || !GameManager.Instance.RunActive) return;
+
+            _blackoutRunId = GameManager.Instance.RunId;
+            SetBlackout("BLACKOUT", "DON'T TOUCH ANYTHING", chaosAccent);
+            fakeGameOverGroup.blocksRaycasts = false;   // the freeze does the pausing
+            fakeGameOverGroup.alpha = 0f;
+
+            _blackoutTween?.Kill();
+            _blackoutTween = DOTween.Sequence().SetUpdate(true)
+                .Append(fakeGameOverGroup.DOFade(1f, 0.2f))
+                .AppendInterval(duration * 0.7f)
+                .AppendCallback(() =>
+                {
+                    if (SameRun(_blackoutRunId)) SetBlackout("STILL ALIVE", "CHAOS, NOT DEATH", chaosRelief);
+                })
+                .AppendInterval(duration * 0.3f)
+                .Append(fakeGameOverGroup.DOFade(0f, 0.25f))
+                // Fires on natural completion *and* on a forced kill, so the
+                // screen is guaranteed clear however this sequence ends.
+                .OnKill(() => { if (fakeGameOverGroup != null) fakeGameOverGroup.alpha = 0f; });
+        }
+
+        private void SetBlackout(string headline, string sub, Color color)
+        {
+            if (fakeGameOverText != null)
+            {
+                fakeGameOverText.text = headline;
+                fakeGameOverText.color = color;
+            }
+            if (fakeGameOverSubText != null) fakeGameOverSubText.text = sub;
+        }
+
+        /// <summary>Is a delayed beat still inside the run that scheduled it?</summary>
+        private static bool SameRun(int runId) =>
+            GameManager.Exists && GameManager.Instance.RunActive && GameManager.Instance.RunId == runId;
 
         private void HandleChaosEnded(ChaosType type)
         {
@@ -230,7 +299,25 @@ namespace WrongDirection.Managers
                     var c = screenFlash.color; c.a = 0f; screenFlash.color = c;
                     cameraRig.localPosition = _rigHome;
                     break;
+
+                case ChaosType.FakeGameOver:
+                    // The sequence's own fade-out lands ~0.45s after the
+                    // effect window closes, so a live one is left to finish.
+                    // This is the backstop for a blackout that was cut short
+                    // and would otherwise leave the screen dark.
+                    if (_blackoutTween == null || !_blackoutTween.IsActive())
+                        ClearBlackout();
+                    break;
             }
+        }
+
+        /// <summary>Hard-clears the chaos blackout, whatever state it is in.</summary>
+        private void ClearBlackout()
+        {
+            _blackoutRunId = -1;
+            _blackoutTween?.Kill();   // OnKill zeroes the alpha
+            _blackoutTween = null;
+            if (fakeGameOverGroup != null) fakeGameOverGroup.alpha = 0f;
         }
 
         private void Flash(Color color)
@@ -249,6 +336,8 @@ namespace WrongDirection.Managers
             _scoreTween?.Kill();
             _arrowTween?.Kill();
             _chaosTween?.Kill();
+            _gameOverTween?.Kill();
+            ClearBlackout();
         }
 
         private void OnDestroy() => KillAll();
