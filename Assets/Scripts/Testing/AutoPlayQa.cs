@@ -141,6 +141,20 @@ namespace WrongDirection.Testing
         private int _blackoutAboveGameOver;      // frames the blackout outranked the real panel
         private int _goShownFrames, _watchFrames;
 
+        // Chaos status chip: the repeat-exposure language. Watched for the two
+        // ways a persistent indicator goes wrong — a stale chip left on screen
+        // after the effect (or the run) is over, and a label that names a
+        // different effect than the one actually running.
+        private GameObject _chipPanel;
+        private TMP_Text _chipLabel;
+        private ChaosType _activeChaosType;
+        private float _chaosEndedAt = -999f;
+        private int _chipStaleFrames, _chipWrongLabelFrames, _chipAfterRunFrames;
+        private int _chipShownOnRepeat, _chipMissingOnRepeat, _chipSaidGameOver;
+        private bool _chipEverShown;
+        private readonly HashSet<ChaosType> _chipTypesShown = new HashSet<ChaosType>();
+        private readonly HashSet<ChaosType> _chaosDiscovered = new HashSet<ChaosType>();
+
         private void Update()
         {
             if (!GameManager.Exists) return;
@@ -178,6 +192,75 @@ namespace WrongDirection.Testing
                 && _blackoutPanel.transform.GetSiblingIndex() > _goPanel.transform.GetSiblingIndex()
                 && ++_blackoutAboveGameOver == 1)
                 Bug("Chaos blackout renders above GameOverScreen (sibling order)");
+
+            WatchChaosChip(gm);
+        }
+
+        /// <summary>
+        /// The chip is presentation, so it is judged purely on what it shows:
+        /// visible only while an effect is live (plus its fade-out), naming the
+        /// effect that is actually running, and gone the moment the run is.
+        /// </summary>
+        private void WatchChaosChip(GameManager gm)
+        {
+            if (_chipPanel == null)
+            {
+                var hud = FindPanel("GameplayHUD");
+                var chip = hud != null ? hud.transform.Find("ChaosIndicator") : null;
+                if (chip == null) return;
+                _chipPanel = chip.gameObject;
+                var label = chip.Find("Label");
+                if (label != null) _chipLabel = label.GetComponent<TMP_Text>();
+            }
+
+            if (!Visible(_chipPanel)) return;
+            _chipEverShown = true;
+            string shown = _chipLabel != null ? _chipLabel.text : string.Empty;
+            if (shown.Replace(" ", string.Empty).ToUpperInvariant().Contains("GAMEOVER"))
+                _chipSaidGameOver++;
+
+            if (_anyChaos)
+            {
+                _chipTypesShown.Add(_activeChaosType);
+                string want = ExpectedChipLabel(_activeChaosType);
+                if (_chipLabel != null && !shown.Contains(want)
+                    && ++_chipWrongLabelFrames == 1)
+                    Bug($"Chaos chip reads \"{shown}\" while {_activeChaosType} is running (want \"{want}\")");
+                return;
+            }
+
+            // No chaos: the 0.18s fade-out is legal, anything past that is stale.
+            if (Time.realtimeSinceStartup - _chaosEndedAt > 0.5f && ++_chipStaleFrames == 1)
+                Bug($"Chaos chip still visible {Time.realtimeSinceStartup - _chaosEndedAt:0.0}s after the effect ended " +
+                    $"(reads \"{shown}\")");
+
+            if (!gm.RunActive && ++_chipAfterRunFrames == 1)
+                Bug($"Chaos chip visible after run {gm.RunId} ended (state {gm.State})");
+        }
+
+        /// <summary>
+        /// The oracle's OWN copy of the chip vocabulary — deliberately not
+        /// ChaosIndicator.LabelFor. Same principle as deriving the expected
+        /// swipe from the color instead of asking RuleEngine: if the harness
+        /// imported the production table, a wrong label would agree with itself
+        /// and the check would pass. It also keeps Testing off Presentation,
+        /// which is what the architecture graph wants.
+        /// </summary>
+        private static string ExpectedChipLabel(ChaosType type)
+        {
+            switch (type)
+            {
+                case ChaosType.ReverseControls:  return "REVERSE";
+                case ChaosType.MirrorInput:      return "MIRROR";
+                case ChaosType.TimeSlow:         return "SLOW";
+                case ChaosType.TimeFast:         return "FAST";
+                case ChaosType.ScreenRotate:     return "ROTATE";
+                case ChaosType.ScreenShake:      return "SHAKE";
+                case ChaosType.Flicker:          return "FLICKER";
+                case ChaosType.InvertedColors:   return "INVERT";
+                case ChaosType.FakeInstructions: return "DECEPTION";
+                default:                         return "BLACKOUT";   // FakeGameOver
+            }
         }
 
         /// <summary>Alpha-based overlay visibility — never activeInHierarchy alone.</summary>
@@ -196,6 +279,11 @@ namespace WrongDirection.Testing
         {
             Log($"STATE {from} -> {to}");
             if (to == GameState.Tutorial) _sawTutorial = true;
+            // BeginRun seeds the game's cooldown counter to its full value so a
+            // new run's first recovery roll is not blocked. The oracle has to
+            // mirror that, or a legal early spawn in run N+1 gets judged
+            // against run N's instruction count and reads as a violation.
+            if (to == GameState.Playing && from != GameState.Paused) _instructionsSinceRecovery = 999;
         }
 
         private void OnScore(int score, int delta) => _score = score;
@@ -223,17 +311,37 @@ namespace WrongDirection.Testing
         private void OnChaosStart(ChaosEffect e)
         {
             _anyChaos = true;
-            _chaosSeen.Add(e.Type);
+            _activeChaosType = e.Type;
+            bool repeat = !_chaosSeen.Add(e.Type);   // Add returns false if already seen
             if (_firstChaosScore < 0) _firstChaosScore = _score;
             if (e.Type == ChaosType.ReverseControls) _reverseActive = true;
             if (e.Type == ChaosType.MirrorInput) _mirrorActive = true;
             if (e.Type == ChaosType.FakeInstructions) _fakeActive = true;
-            Log($"CHAOS {e.Type} (score {_score}, dur {e.Duration:0.0}s)");
+            Log($"CHAOS {e.Type} (score {_score}, dur {e.Duration:0.0}s){(repeat ? " [repeat]" : " [first]")}");
+            if (repeat) StartCoroutine(ExpectChip(e.Type));
+        }
+
+        /// <summary>
+        /// The headline acceptance criterion: a REPEAT occurrence must announce
+        /// itself with the chip, because no explanation card fires a second time
+        /// for the same type. Checked a beat after the start so the fade-in has
+        /// landed.
+        /// </summary>
+        private IEnumerator ExpectChip(ChaosType type)
+        {
+            yield return new WaitForSecondsRealtime(0.3f);
+            if (_chipPanel == null) yield break;              // reported by its own check
+            if (!_anyChaos || _activeChaosType != type) yield break;  // already over — nothing to describe
+            if (_frozen) yield break;                         // a discovery card owns the screen
+            if (Visible(_chipPanel)) _chipShownOnRepeat++;
+            else if (++_chipMissingOnRepeat == 1)
+                Bug($"Repeat {type} raised no chaos chip (a second+ occurrence must be announced)");
         }
 
         private void OnChaosEnd(ChaosType t)
         {
             _anyChaos = false;
+            _chaosEndedAt = Time.realtimeSinceStartup;
             if (t == ChaosType.ReverseControls) _reverseActive = false;
             if (t == ChaosType.MirrorInput) _mirrorActive = false;
             if (t == ChaosType.FakeInstructions) _fakeActive = false;
@@ -249,6 +357,7 @@ namespace WrongDirection.Testing
         private void OnChaosDiscovered(ChaosType type)
         {
             Log($"DISCOVERY card: chaos {type} (auto-dismisses)");
+            _chaosDiscovered.Add(type);
             _frozen = true;
         }
 
@@ -537,7 +646,10 @@ namespace WrongDirection.Testing
             _dieNow = false;
             yield return new WaitForSeconds(0.5f);
             GameEvents.OnChallengeEnded -= onCh;
-            Check(challengeCompleted, "Daily challenge completes at target");
+            Check(challengeCompleted,
+                $"Daily challenge completes at target (\"{daily.Today.title}\", target "
+                + $"{daily.Today.scoreTarget}, run scored {_lastResult.Score} with "
+                + $"{_lastResult.WrongAnswers} wrong)");
             Check(daily.CompletedToday, "Daily challenge marked done for today");
             Check(SaveManager.Instance.Data.coins > coinsBefore,
                 $"Daily reward paid (coins {coinsBefore} -> {SaveManager.Instance.Data.coins})");
@@ -556,6 +668,24 @@ namespace WrongDirection.Testing
                   && _chaosSeen.Contains(ChaosType.FakeInstructions),
                 "All 3 input/deception chaos types exercised with correct answers");
 
+            // --- Chaos communication (first = card, repeat = chip) --------------
+            Check(_chipPanel != null, "Chaos indicator chip exists in the gameplay HUD");
+            Check(_chaosDiscovered.Count > 0,
+                $"First occurrence still explains itself ({_chaosDiscovered.Count} discovery cards: "
+                + $"[{string.Join(", ", _chaosDiscovered)}])");
+            Check(_chipEverShown, "Chaos chip appeared during the soak");
+            Check(_chipMissingOnRepeat == 0,
+                $"Every repeat occurrence raised the chip ({_chipShownOnRepeat} repeats announced, "
+                + $"{_chipMissingOnRepeat} silent)");
+            Check(_chipTypesShown.Count >= 6,
+                $"Chip labelled {_chipTypesShown.Count}/10 chaos types [{string.Join(", ", _chipTypesShown)}]");
+            Check(_chipWrongLabelFrames == 0,
+                "Chip label always matched the live chaos type (no stale text across transitions)");
+            Check(_chipStaleFrames == 0, "Chip cleared when chaos ended (no lingering indicator)");
+            Check(_chipAfterRunFrames == 0, "Chip cleared on GAME OVER / retry (no stale indicator between runs)");
+            Check(_chipSaidGameOver == 0,
+                $"Chip never read GAME OVER — the blackout is labelled {ExpectedChipLabel(ChaosType.FakeGameOver)}"
+                + $" ({_chipTypesShown.Count} labels observed)");
             // --- Run-state invariant (fake-game-over regression) ---------------
             Check(_goVisibleWhilePlaying == 0,
                 $"GAME OVER UI never visible during an ACTIVE run ({_watchFrames} frames watched)");

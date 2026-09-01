@@ -79,6 +79,7 @@ namespace WrongDirection.EditorTools
             _fontHeading = EnsureFontAsset("BebasNeue-Regular");
             _fontBody = EnsureFontAsset("Oswald-Variable");
             ApplySymbolFallback(); // ♥ / ✓ / ★ render everywhere, Android-safe (P0-1)
+            ApplyChaosIconFallback(); // chaos chip glyphs, same guarantee
             EnsureCosmeticCatalog(); // Resources/CosmeticCatalog.asset — CosmeticManager loads it
             EnsureLeaderboardConfig(); // Resources/LeaderboardConfig.asset — provider selection reads it
 
@@ -509,6 +510,51 @@ namespace WrongDirection.EditorTools
             pauseBlock.disabledColor = new Color(1f, 1f, 1f, 0.02f);
             pauseBlock.fadeDuration = 0.08f;
             pauseBtn.colors = pauseBlock;
+
+            // ---------------- Chaos status chip ----------------
+            // The repeat-exposure language: ChaosIntroCard explains a type the
+            // first time it ever fires, this chip is what every later
+            // occurrence gets. Anchored to MidCenter under the rule word so its
+            // clearance from the arrow stack is identical on every aspect ratio
+            // — top-centre is impossible here, because on the 4:3 canvas the
+            // timer ring's top reaches to within ~31px of the score block.
+            // Status HUD, not a popup: no raycast, no continuous animation.
+            var chaosChipGo = new GameObject("ChaosIndicator", typeof(RectTransform));
+            chaosChipGo.transform.SetParent(hudT, false);
+            var chaosChipRect = (RectTransform)chaosChipGo.transform;
+            SetRect(chaosChipRect, MidCenter, new Vector2(0f, -455f), new Vector2(300f, 56f));
+            var chaosChipGroup = chaosChipGo.AddComponent<CanvasGroup>();
+            chaosChipGroup.alpha = 0f;              // ships hidden; only a live chaos reveals it
+            chaosChipGroup.interactable = false;
+            chaosChipGroup.blocksRaycasts = false;
+            var chaosChipGlow = Img("Glow", chaosChipGo.transform, glowSprite,
+                new Color(YellowRule.r, YellowRule.g, YellowRule.b, 0.12f),
+                MidCenter, Vector2.zero, new Vector2(380f, 130f));
+            chaosChipGlow.raycastTarget = false;
+            // Thin border = outer sliced rect with the background inset 2px,
+            // so no new sprite is needed for the outline.
+            var chaosChipBorder = Img("Border", chaosChipGo.transform, uiSprite,
+                new Color(YellowRule.r, YellowRule.g, YellowRule.b, 0.55f), MidCenter, Vector2.zero, Vector2.zero);
+            chaosChipBorder.type = Image.Type.Sliced;
+            chaosChipBorder.raycastTarget = false;
+            Stretch(chaosChipBorder.rectTransform, 0f);
+            var chaosChipBg = Img("Background", chaosChipGo.transform, uiSprite,
+                new Color(0.027f, 0.027f, 0.047f, 0.9f), MidCenter, Vector2.zero, Vector2.zero);
+            chaosChipBg.type = Image.Type.Sliced;
+            chaosChipBg.raycastTarget = false;
+            Stretch(chaosChipBg.rectTransform, 2f);
+            // One centred label carries icon + word ("⬌  MIRROR"): the glyph
+            // resolves through the ChaosIcons fallback on _fontHeading, so the
+            // pair stays centred whatever the word's length.
+            var chaosChipLabel = Text("Label", chaosChipGo.transform, "", 32, MidCenter, Vector2.zero, Vector2.zero,
+                font: _fontHeading, color: YellowRule);
+            Stretch(chaosChipLabel.rectTransform, 10f);
+            // Entrance kicker: the constant word CHAOS, above the chip, faded
+            // out once it has landed. Constant on purpose — nothing per-type
+            // here can ever go stale.
+            var chaosChipKicker = Text("Kicker", chaosChipGo.transform, "CHAOS", 24, TopCenter, new Vector2(0f, 36f), new Vector2(300f, 32f),
+                font: _fontBody, color: UI_SECONDARY_TEXT);
+            chaosChipKicker.alpha = 0f;
 
             // ---------------- GameOverScreen ----------------
             var gameOverGo = Panel("GameOverScreen", canvasRoot);
@@ -1088,19 +1134,38 @@ namespace WrongDirection.EditorTools
             chaosCardGroup.blocksRaycasts = false;
             var chaosCardT = Panel("Card", chaosCardGo.transform).transform;
             var chaosCardRect = (RectTransform)chaosCardT;
-            SetRect(chaosCardRect, MidCenter, Vector2.zero, new Vector2(920f, 560f));
-            var ccHeader = Text("Header", chaosCardT, "NEW CHAOS UNLOCKED", 40, TopCenter, new Vector2(0f, -40f), new Vector2(860f, 60f),
+            SetRect(chaosCardRect, MidCenter, Vector2.zero, new Vector2(920f, 640f));
+            var ccHeader = Text("Header", chaosCardT, "CHAOS", 40, TopCenter, new Vector2(0f, -40f), new Vector2(860f, 60f),
                 font: _fontHeading, color: ComboCol);
             var ccTitle = Text("ChaosTitle", chaosCardT, "", 80, TopCenter, new Vector2(0f, -160f), new Vector2(860f, 110f),
                 font: _fontDisplay);
             var ccBody = Text("Body", chaosCardT, "", 38, TopCenter, new Vector2(0f, -330f), new Vector2(860f, 160f),
                 font: _fontBody, color: UI_SECONDARY_TEXT);
+            // Teaches the shorthand while the full explanation is on screen:
+            // this line prints the exact chip the HUD will show from the second
+            // occurrence onwards.
+            var ccHint = Text("ChipHint", chaosCardT, "", 32, TopCenter, new Vector2(0f, -520f), new Vector2(860f, 64f),
+                font: _fontHeading, color: YellowRule);
             var chaosCard = canvasGo.AddComponent<ChaosIntroCard>();
             Set(chaosCard, "panel", chaosCardGroup);
             Set(chaosCard, "headerText", ccHeader);
             Set(chaosCard, "titleText", ccTitle);
             Set(chaosCard, "bodyText", ccBody);
+            Set(chaosCard, "hintText", ccHint);
             Set(chaosCard, "card", chaosCardRect);
+
+            // Chaos status chip controller. It lives on the always-enabled
+            // Canvas, not on the chip: GameplayHUD is deactivated outside a run
+            // and a listener that sleeps with it would miss OnChaosEnded /
+            // OnRunEnded and leave a stale label behind. The chip rect it drives
+            // is a HUD child, so it still cannot leak into any other screen.
+            var chaosIndicator = canvasGo.AddComponent<ChaosIndicator>();
+            Set(chaosIndicator, "group", chaosChipGroup);
+            Set(chaosIndicator, "chip", chaosChipRect);
+            Set(chaosIndicator, "label", chaosChipLabel);
+            Set(chaosIndicator, "kicker", chaosChipKicker);
+            Set(chaosIndicator, "glow", chaosChipGlow);
+            SetColor(chaosIndicator, "accent", YellowRule);
 
             // Rulebook (HELP): 5 pages, opened from the Settings HELP row.
             var rulebookGo = Panel("RulebookPanel", canvasRoot);
@@ -2430,6 +2495,72 @@ namespace WrongDirection.EditorTools
                 font.fallbackFontAssetTable.Add(fallback);
                 EditorUtility.SetDirty(font);
             }
+        }
+
+        /// <summary>
+        /// Chaos chip glyphs (ChaosIndicator.IconGlyphs). A second, dedicated
+        /// fallback rather than more characters in SymbolFallback.asset: that
+        /// atlas is a 256x256 static page already carrying ♥ ✓ ★ at 90pt and
+        /// four more glyphs would overflow it, and resizing it would mean
+        /// recreating an asset three font assets already point at.
+        /// </summary>
+        private static void ApplyChaosIconFallback()
+        {
+            var icons = EnsureChaosIconFont();
+            if (icons == null) return;
+
+            AddFallback(_fontDisplay, icons);
+            AddFallback(_fontHeading, icons);
+            AddFallback(_fontBody, icons);
+            AssetDatabase.SaveAssets();
+        }
+
+        private static TMP_FontAsset EnsureChaosIconFont()
+        {
+            const string assetPath = "Assets/Fonts/ChaosIcons.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>(assetPath);
+            if (existing != null)
+            {
+                // Idempotent retrofit: a later chip glyph joins the baked atlas
+                // instead of silently rendering as a missing-glyph box.
+                existing.atlasPopulationMode = AtlasPopulationMode.Dynamic;
+                existing.TryAddCharacters(ChaosIndicator.IconGlyphs, out _);
+                existing.atlasPopulationMode = AtlasPopulationMode.Static;
+                EditorUtility.SetDirty(existing);
+                return existing;
+            }
+
+            var source = AssetDatabase.LoadAssetAtPath<Font>("Assets/Fonts/NotoSansSymbols2-Regular.ttf");
+            if (source == null)
+            {
+                Debug.LogWarning("[BuildMainScene] NotoSansSymbols2-Regular.ttf missing; chaos chip icons skipped (labels still render).");
+                return null;
+            }
+
+            var fontAsset = TMP_FontAsset.CreateFontAsset(
+                source, 90, 9, GlyphRenderMode.SDFAA, 512, 512, AtlasPopulationMode.Dynamic);
+            if (fontAsset == null)
+            {
+                Debug.LogWarning("[BuildMainScene] Could not create ChaosIcons.asset.");
+                return null;
+            }
+
+            fontAsset.name = "ChaosIcons";
+            fontAsset.TryAddCharacters(ChaosIndicator.IconGlyphs, out string missing);
+            if (!string.IsNullOrEmpty(missing))
+                Debug.LogWarning($"[BuildMainScene] Chaos icon glyphs missing from NotoSansSymbols2: {missing}");
+            fontAsset.atlasPopulationMode = AtlasPopulationMode.Static;
+
+            AssetDatabase.CreateAsset(fontAsset, assetPath);
+            fontAsset.material.name = "ChaosIcons Material";
+            AssetDatabase.AddObjectToAsset(fontAsset.material, fontAsset);
+            if (fontAsset.atlasTextures != null && fontAsset.atlasTextures.Length > 0 && fontAsset.atlasTextures[0] != null)
+            {
+                fontAsset.atlasTextures[0].name = "ChaosIcons Atlas";
+                AssetDatabase.AddObjectToAsset(fontAsset.atlasTextures[0], fontAsset);
+            }
+            AssetDatabase.SaveAssets();
+            return fontAsset;
         }
 
         // ------------------------------------------------------------------

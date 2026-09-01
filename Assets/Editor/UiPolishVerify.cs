@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.UI;
 using WrongDirection.Managers;
+using WrongDirection.Presentation;
 using WrongDirection.UI;
 
 namespace WrongDirection.EditorTools
@@ -102,6 +103,7 @@ namespace WrongDirection.EditorTools
             Transform hud = root.Find("GameplayHUD");
 
             VerifyRunEndWiring(report, root);
+            VerifyChaosIndicator(report, root, hud);
 
             // Sample worst-case dynamic text so screenshots and the audit see
             // realistic content, not empty labels.
@@ -225,6 +227,12 @@ namespace WrongDirection.EditorTools
                     float padR = canvasRect.xMax - coins.xMax;
                     Check(report, Mathf.Abs(padL - padR) <= 2f && padL > 30f,
                         $"TOP BAR equal edge padding: left {padL:0.#} vs right {padR:0.#}");
+
+                    // The chaos chip is a HUD child, so every non-gameplay
+                    // screen gets it for free — assert the consequence.
+                    var chipT = hud.Find("ChaosIndicator");
+                    Check(report, chipT != null && !chipT.gameObject.activeInHierarchy,
+                        "CHIP not rendered while the HUD is off (MENU shown)");
                 });
 
                 // GAME OVER (ads visible = worst case) -----------------------
@@ -316,7 +324,8 @@ namespace WrongDirection.EditorTools
                 // HUD staged as a live YELLOW (tap) instruction --------------
                 ShowOnly(hud, menu, gameOver, settings, rulebook);
                 StagePurpleHud(hud);
-                CaptureAndAudit(canvas, cam, size, $"hud_tap_{size.x}x{size.y}.png", report, null);
+                CaptureAndAudit(canvas, cam, size, $"hud_tap_{size.x}x{size.y}.png", report,
+                    () => AuditChaosChip(report, root, hud));
 
                 // PROGRESS (Statistics + Achievements tabs) ------------------
                 Transform progress = root.Find("ProgressPanel");
@@ -438,6 +447,152 @@ namespace WrongDirection.EditorTools
 
         // ------------------------------------------------------------------
 
+        /// <summary>
+        /// Chaos status chip audit. Invariants: exactly one chip, it ships
+        /// hidden and blank, it is a GameplayHUD child (so it cannot leak into
+        /// any other screen), it consumes no input, and every serialized
+        /// reference the runtime component needs is wired.
+        /// </summary>
+        private static void VerifyChaosIndicator(StringBuilder report, Transform root, Transform hud)
+        {
+            report.AppendLine("## Chaos status chip");
+
+            var components = Object.FindObjectsByType<ChaosIndicator>(FindObjectsInactive.Include);
+            Check(report, components.Length == 1,
+                $"Exactly one ChaosIndicator component in the scene (found {components.Length})");
+
+            int rects = 0;
+            foreach (var t in root.GetComponentsInChildren<Transform>(true))
+                if (t.name == "ChaosIndicator") rects++;
+            Check(report, rects == 1, $"Exactly one ChaosIndicator rect under Canvas (found {rects})");
+
+            var chip = hud != null ? hud.Find("ChaosIndicator") : null;
+            Check(report, chip != null, "Chip is a GameplayHUD child (cannot leak into other screens)");
+            if (chip == null) { report.AppendLine(); return; }
+
+            var group = chip.GetComponent<CanvasGroup>();
+            Check(report, group != null && group.alpha == 0f && !group.blocksRaycasts && !group.interactable,
+                "Chip ships hidden (CanvasGroup alpha 0, blocksRaycasts off, non-interactable)");
+
+            // A raycast target anywhere in the chip would eat swipes over the
+            // lower third of the play area — the chip is status, never input.
+            int blockers = 0;
+            foreach (var g in chip.GetComponentsInChildren<Graphic>(true))
+                if (g.raycastTarget) blockers++;
+            Check(report, blockers == 0, $"No raycast blockers inside the chip ({blockers} found)");
+
+            var label = chip.Find("Label");
+            var labelText = label != null ? label.GetComponent<TMP_Text>() : null;
+            Check(report, labelText != null && string.IsNullOrEmpty(labelText.text),
+                "Chip ships with no baked label (nothing stale to show)");
+            var kicker = chip.Find("Kicker");
+            var kickerText = kicker != null ? kicker.GetComponent<TMP_Text>() : null;
+            Check(report, kickerText != null && kickerText.text == "CHAOS" && kickerText.alpha == 0f,
+                "Entrance kicker present, constant \"CHAOS\", invisible at rest");
+
+            // The chip glyph is baked into its own fallback: the arrows the
+            // design brief suggested exist in none of the project's fonts, so a
+            // missing fallback would silently render a box on Android.
+            var icons = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>("Assets/Fonts/ChaosIcons.asset");
+            Check(report, icons != null, "Assets/Fonts/ChaosIcons.asset generated");
+            if (icons != null && labelText != null)
+            {
+                bool registered = labelText.font != null && labelText.font.fallbackFontAssetTable != null
+                    && labelText.font.fallbackFontAssetTable.Contains(icons);
+                Check(report, registered, $"ChaosIcons registered as a fallback on {(labelText.font != null ? labelText.font.name : "<none>")}");
+                bool baked = true;
+                string missing = string.Empty;
+                foreach (char c in ChaosIndicator.IconGlyphs)
+                    if (!icons.HasCharacter(c)) { baked = false; missing += $"U+{(int)c:X4} "; }
+                Check(report, baked, $"All chip glyphs baked into the icon atlas ({(baked ? "none missing" : missing.Trim())})");
+            }
+
+            if (components.Length == 1)
+            {
+                var so = new SerializedObject(components[0]);
+                foreach (var field in new[] { "group", "chip", "label", "kicker", "glow" })
+                {
+                    var prop = so.FindProperty(field);
+                    Check(report, prop != null && prop.objectReferenceValue != null,
+                        $"ChaosIndicator.{field} wired");
+                }
+            }
+
+            // Draw order: GAME OVER outranks the chip. The chip is a HUD child
+            // and the HUD is built before both overlays, so this holds by
+            // construction — assert it anyway, sibling order is fragile.
+            var gameOver = root.Find("GameOverScreen");
+            var blackout = root.Find("FakeGameOver");
+            Check(report, hud != null && gameOver != null && hud.GetSiblingIndex() < gameOver.GetSiblingIndex(),
+                "Chip draws BELOW GameOverScreen (HUD sibling order)");
+            Check(report, hud != null && blackout != null && hud.GetSiblingIndex() < blackout.GetSiblingIndex(),
+                "Chip draws BELOW the chaos blackout");
+
+            report.AppendLine();
+        }
+
+        /// <summary>
+        /// Per-resolution geometry for the chip: it must never touch the score,
+        /// combo, lives, pause button, session best, rule word, arrow tile or
+        /// timer ring. A bare !Overlaps passes at 1px, so real clearance is
+        /// asserted against the two neighbours it is sandwiched between.
+        /// </summary>
+        private static void AuditChaosChip(StringBuilder report, Transform root, Transform hud)
+        {
+            var chip = hud.Find("ChaosIndicator");
+            if (chip == null) { report.AppendLine("FAIL CHIP: ChaosIndicator missing from the HUD"); return; }
+
+            var chipR = R(root, chip);
+            var kicker = chip.Find("Kicker");
+            var assembly = kicker != null ? Union(chipR, R(root, kicker)) : chipR;
+
+            foreach (var name in new[]
+                     {
+                         "Score", "ScoreLabel", "Combo", "Anticipation", "Lives", "PauseButton",
+                         "SessionBest", "RuleWord", "ArrowRoot/ArrowPivot/Arrow",
+                         "ArrowRoot/ArrowPivot/TimerFill",
+                     })
+            {
+                var other = hud.Find(name);
+                if (other == null) { report.AppendLine($"FAIL CHIP: HUD/{name} missing"); continue; }
+                Check(report, !Overlaps(assembly, R(root, other)), $"CHIP clear of {name}");
+            }
+
+            // Sandwiched between the rule word above and the canvas floor below.
+            var ruleWord = hud.Find("RuleWord");
+            if (ruleWord != null)
+            {
+                float g = R(root, ruleWord).yMin - assembly.yMax;
+                Check(report, g >= 12f, $"CHIP clearance under RuleWord = {g:0.#}px (want >= 12)");
+            }
+            var canvasRect = R(root, (RectTransform)root);
+            float floor = assembly.yMin - canvasRect.yMin;
+            Check(report, floor >= 12f, $"CHIP clearance above the canvas floor = {floor:0.#}px (want >= 12)");
+
+            // Spec §4: compact. It must stay a chip, not grow into a banner.
+            Check(report, chipR.width <= 340f && chipR.height <= 72f,
+                $"CHIP stays compact: {chipR.width:0}x{chipR.height:0}");
+
+            // The label has to fit inside the chip with the longest pair the
+            // table can produce — an ellipsis on a 9-character word would make
+            // the repeat language unreadable.
+            var labelT = chip.Find("Label");
+            var label = labelT != null ? labelT.GetComponent<TMP_Text>() : null;
+            if (label != null)
+            {
+                label.ForceMeshUpdate();
+                float spare = ((RectTransform)labelT).rect.width - label.preferredWidth;
+                Check(report, spare >= 0f,
+                    $"CHIP label fits: \"{label.text}\" has {spare:0.#}px spare inside the chip");
+            }
+        }
+
+        private static Rect Union(Rect a, Rect b) => Rect.MinMaxRect(
+            Mathf.Min(a.xMin, b.xMin), Mathf.Min(a.yMin, b.yMin),
+            Mathf.Max(a.xMax, b.xMax), Mathf.Max(a.yMax, b.yMax));
+
+        // ------------------------------------------------------------------
+
         private static void ShowOnly(Transform show, params Transform[] hide)
         {
             Activate(show, true);
@@ -477,6 +632,20 @@ namespace WrongDirection.EditorTools
             var tmp = word != null ? word.GetComponent<TMP_Text>() : null;
             if (tmp != null) tmp.color = yellow;
             SetText(hud, "Score", "42");
+
+            // Chaos chip: reveal it with the widest pair the table can produce
+            // (icon + "DECEPTION"), so the capture and the geometry audit see
+            // the worst case rather than an invisible empty rect.
+            var chip = hud.Find("ChaosIndicator");
+            if (chip != null)
+            {
+                var group = chip.GetComponent<CanvasGroup>();
+                if (group != null) group.alpha = 1f;
+                SetText(chip, "Label", ChaosIndicator.ChipLabel(WrongDirection.Core.ChaosType.FakeInstructions));
+                var kickerT = chip.Find("Kicker");
+                var kicker = kickerT != null ? kickerT.GetComponent<TMP_Text>() : null;
+                if (kicker != null) kicker.alpha = 1f;   // entrance beat, the tallest the chip ever gets
+            }
         }
 
         private static void SetText(Transform parent, string path, string text)

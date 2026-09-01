@@ -11,13 +11,19 @@ namespace WrongDirection.Presentation
     /// OnChaosDiscovered; this card names the effect and gives the one-line
     /// survival rule. Auto-hides when GameManager releases the freeze
     /// (OnDiscoveryDismissed) — no input needed, pure listener.
+    ///
+    /// It is also where the repeat language is taught: the hint line prints
+    /// the exact chip ChaosIndicator will show for every later occurrence, so
+    /// the full explanation happens once and the shorthand is recognised from
+    /// then on.
     /// </summary>
     public class ChaosIntroCard : MonoBehaviour
     {
         [SerializeField] private CanvasGroup panel;
-        [SerializeField] private TMP_Text headerText;   // "NEW CHAOS UNLOCKED"
+        [SerializeField] private TMP_Text headerText;   // "CHAOS · <family>"
         [SerializeField] private TMP_Text titleText;    // chaos name
         [SerializeField] private TMP_Text bodyText;     // survival line
+        [SerializeField] private TMP_Text hintText;     // "FROM NOW ON:  ⬌ MIRROR"
         [SerializeField] private RectTransform card;
         [SerializeField] private float fadeSeconds = 0.12f;
         [SerializeField] private Color accent = new Color32(0xFF, 0xD4, 0x00, 0xFF);
@@ -43,13 +49,19 @@ namespace WrongDirection.Presentation
 
         private void HandleChaosDiscovered(ChaosType type)
         {
-            if (headerText != null) headerText.text = "NEW CHAOS UNLOCKED";
+            // DiscoveryCelebration already slams "NEW CHAOS UNLOCKED" over the
+            // very first chaos ever, and it draws above this card — printing
+            // the same words here put the identical string on screen twice.
+            // The header carries the family instead, which is what makes the
+            // chip's shared icon legible later.
+            if (headerText != null) headerText.text = "CHAOS · " + ChaosIndicator.FamilyFor(type);
             if (titleText != null)
             {
                 titleText.text = TitleFor(type);
                 titleText.color = accent;
             }
             if (bodyText != null) bodyText.text = BodyFor(type);
+            if (hintText != null) hintText.text = "FROM NOW ON:  " + ChaosIndicator.ChipLabel(type);
             SetVisible(true);
         }
 

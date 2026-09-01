@@ -94,7 +94,34 @@ namespace WrongDirection.Presentation
             AudioClip clip = chaosTypeClips != null && i >= 0 && i < chaosTypeClips.Length
                 ? chaosTypeClips[i]
                 : null;
-            Play(clip != null ? clip : chaosClip);
+            Play(clip != null ? clip : chaosClip, ChaosPitchFor(effect.Type));
+        }
+
+        /// <summary>
+        /// Chaos audio is four FAMILIES, not ten unrelated sounds: the clip
+        /// table already groups input warp / time / deception / visual noise
+        /// (see chaosTypeClips wiring in BuildMainScene), and pitch separates
+        /// the members inside a family without breaking the family's identity.
+        /// Time is the one the player has to hear immediately, so it gets the
+        /// widest split: SLOW drops a major third, FAST rises one.
+        /// Exactly one cue plays per chaos start — nothing else on the bus
+        /// makes a chaos sound.
+        /// </summary>
+        private static float ChaosPitchFor(ChaosType type)
+        {
+            switch (type)
+            {
+                case ChaosType.TimeSlow:         return 0.80f;  // lower, stretched
+                case ChaosType.TimeFast:         return 1.25f;  // higher, sharper
+                case ChaosType.ReverseControls:  return 1.00f;  // input warp, base
+                case ChaosType.MirrorInput:      return 1.09f;  // input warp, sibling
+                case ChaosType.FakeInstructions: return 1.00f;  // deception, base
+                case ChaosType.InvertedColors:   return 1.07f;  // deception, sibling
+                case ChaosType.FakeGameOver:     return 0.86f;  // deception, darkest (blackout)
+                case ChaosType.ScreenRotate:     return 1.00f;  // visual noise, base
+                case ChaosType.ScreenShake:      return 0.92f;  // visual noise, heavier
+                default:                         return 1.14f;  // Flicker — visual noise, brittle
+            }
         }
 
         private void Play(AudioClip clip, float pitch = 1f, float gain = 1f)
